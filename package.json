@@ -1,12 +1,35 @@
 {
   "name": "dsh-tag",
-  "version": "0.0.1",
-  "description": "Color tags for DeepSeek Harness (dsh) sessions and workspaces.",
+  "version": "0.1.0",
+  "description": "Color tags for dsh sessions and workspaces: submenu toggles, title colors, hover labels, and a read-only /tags API.",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lib/index.d.ts",
+      "default": "./lib/index.js"
+    },
+    "./client": "./lib/client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "locale",
+    "cordis.patch.yml",
+    "icon.svg",
+    "README.md",
+    "LICENSE"
+  ],
   "keywords": [
     "dsh",
     "deepseek-harness",
     "plugin",
-    "tags"
+    "tags",
+    "session",
+    "workspace"
   ],
   "license": "MIT",
   "author": "ada87",
@@ -18,8 +41,28 @@
   "bugs": {
     "url": "https://github.com/ada87/dsh-tag/issues"
   },
-  "files": [],
-  "publishConfig": {
-    "access": "public"
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web"
+    }
+  },
+  "engines": {
+    "dsh": ">=0.2.2-rc.1 <0.3.0"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node build.mjs && npm run check:client",
+    "dev": "node build.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "check:client": "node --check client/client.js",
+    "test:host": "node scripts/smoke.mjs",
+    "prepare": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^5.9.3"
   }
 }
