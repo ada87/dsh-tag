@@ -1,0 +1,25 @@
+{
+  "name": "dsh-tag",
+  "version": "0.0.1",
+  "description": "Color tags for DeepSeek Harness (dsh) sessions and workspaces.",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "plugin",
+    "tags"
+  ],
+  "license": "MIT",
+  "author": "ada87",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ada87/dsh-tag.git"
+  },
+  "homepage": "https://github.com/ada87/dsh-tag#readme",
+  "bugs": {
+    "url": "https://github.com/ada87/dsh-tag/issues"
+  },
+  "files": [],
+  "publishConfig": {
+    "access": "public"
+  }
+}
