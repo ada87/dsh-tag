@@ -54,7 +54,7 @@ window.__ModuleLoader__.load({
       remove: '删除',
       confirmDelete: '删除标签「{label}」？对应标记也会清除。',
       settingsTitle: '标签',
-      settingsDesc: '会话和工作区共用同一套标签。右键会话或工作区即可打标签；标题颜色就是标签颜色。',
+      settingsDesc: '会话和工作区共用同一套标签。右键会话或工作区即可打标签；标题颜色就是标签颜色。过滤时，标在工作区上的标签会带出整组会话，标在会话上的只带出该会话。',
       empty: '还没有标签，先创建一个。',
       failed: '标签操作失败',
       filterAll: '全部',
@@ -63,6 +63,7 @@ window.__ModuleLoader__.load({
       filterStatusCount: '过滤：{label} · {count}',
       filterClear: '清除过滤',
       filterEmpty: '没有带「{label}」标签的会话',
+      filterWorkspaceEmpty: '「{label}」标在工作区上；这个工作区下暂无会话',
     }
 
     const en = {
@@ -76,7 +77,7 @@ window.__ModuleLoader__.load({
       remove: 'Delete',
       confirmDelete: 'Delete “{label}”? Its assignments will be cleared.',
       settingsTitle: 'Tags',
-      settingsDesc: 'Sessions and workspaces share this tag set. Right-click a row to set a tag; the title uses the tag color.',
+      settingsDesc: 'Sessions and workspaces share this tag set. Right-click either to set a tag; the title uses the tag color. Filtering by a workspace tag includes its whole group; a session tag only includes that session.',
       empty: 'No tags yet — create one below.',
       failed: 'Tag update failed',
       filterAll: 'All',
@@ -85,6 +86,7 @@ window.__ModuleLoader__.load({
       filterStatusCount: 'Filter: {label} · {count}',
       filterClear: 'Clear filter',
       filterEmpty: 'No sessions tagged “{label}”',
+      filterWorkspaceEmpty: '“{label}” is on a workspace; it holds no sessions yet',
     }
 
     const CSS = `
@@ -448,30 +450,55 @@ window.__ModuleLoader__.load({
          */
         function computeGroups(tagId) {
           if (workspaceMembers === null || sessionCatalog === null) return null
-          const matched = new Set()
+          const live = (sessionId) => sessionCatalog.has(sessionId) && !archivedSessions.has(sessionId)
+          const tagged = new Set()
           for (const [sessionId, owner] of Object.entries(state.sessions)) {
             if (owner !== tagId) continue
-            if (!sessionCatalog.has(sessionId)) continue
-            if (archivedSessions.has(sessionId)) continue
-            matched.add(sessionId)
+            if (!live(sessionId)) continue
+            tagged.add(sessionId)
+          }
+          // A workspace tag covers its whole group: the workspace is a tagged
+          // entity, so its sessions share the result. Session tags stay local.
+          const taggedWorkspaces = new Set()
+          for (const workspace of state.workspaces) {
+            if (workspace.tagId === tagId) taggedWorkspaces.add(workspace.id)
+          }
+          const matched = new Set(tagged)
+          for (const workspaceId of taggedWorkspaces) {
+            const ids = workspaceMembers.get(workspaceId)
+            if (ids === undefined) continue
+            for (const id of ids) {
+              if (live(id)) matched.add(id)
+            }
           }
           const byWorkspace = new Map()
-          const idsByWorkspace = new Map()
+          const taggedByWorkspace = new Map()
           const grouped = new Set()
           for (const [workspaceId, ids] of workspaceMembers) {
             const hits = new Set()
+            const own = new Set()
             for (const id of ids) {
               grouped.add(id)
               if (matched.has(id)) hits.add(id)
+              if (tagged.has(id)) own.add(id)
             }
-            idsByWorkspace.set(workspaceId, hits)
+            taggedByWorkspace.set(workspaceId, own)
             byWorkspace.set(workspaceId, hits.size)
           }
           const ungroupedIds = new Set()
           for (const id of matched) {
             if (!grouped.has(id)) ungroupedIds.add(id)
           }
-          return { matched, byWorkspace, idsByWorkspace, ungroupedIds, ungrouped: ungroupedIds.size, total: matched.size }
+          return {
+            tagged,
+            taggedWorkspaces,
+            matched,
+            byWorkspace,
+            taggedByWorkspace,
+            ungroupedIds,
+            ungrouped: ungroupedIds.size,
+            total: matched.size,
+          }
         }
 
         function renderedSessionIds() {
@@ -568,8 +595,8 @@ window.__ModuleLoader__.load({
           for (const key of expandedKeys(groups)) {
             if (userCollapsed.has(key)) continue
             const workspaceId = key.slice('workspace:'.length)
-            const hits = workspaceId === '' ? groups.ungroupedIds : groups.idsByWorkspace.get(workspaceId)
-            if (hits === undefined) continue
+            const hits = workspaceId === '' ? groups.ungroupedIds : groups.taggedByWorkspace.get(workspaceId)
+            if (hits === undefined || hits.size === 0) continue
             const missingFrom = (rendered) => {
               for (const id of hits) {
                 if (!rendered.has(id)) return true
@@ -601,11 +628,14 @@ window.__ModuleLoader__.load({
         }
         function updateFilterEmpty(activeTag, groups) {
           if (filterEmpty === null) return
-          const empty = groups === null
-            ? renderedMatches(activeTag.id) === 0
-            : groups.total === 0 && renderedMatches(activeTag.id) === 0
-          if (empty) {
-            const text = t('filterEmpty', { label: activeTag.label })
+          let text = null
+          if (groups === null) {
+            if (renderedMatches(activeTag.id) === 0) text = t('filterEmpty', { label: activeTag.label })
+          } else if (groups.total === 0) {
+            if (groups.taggedWorkspaces.size > 0) text = t('filterWorkspaceEmpty', { label: activeTag.label })
+            else if (renderedMatches(activeTag.id) === 0) text = t('filterEmpty', { label: activeTag.label })
+          }
+          if (text !== null) {
             if (filterEmpty.textContent !== text) filterEmpty.textContent = text
             if (filterEmpty.hidden) filterEmpty.hidden = false
           } else if (!filterEmpty.hidden) {
@@ -632,8 +662,14 @@ window.__ModuleLoader__.load({
           // A revealed group shows a "collapse sessions" control that a filter
           // has no use for; hidden groups lose their whole group footprint.
           rules.push('[data-row-key^="overflow:"][aria-expanded="true"]{display:none!important}')
+          const show = new Set()
           for (const [sessionId, owner] of Object.entries(state.sessions)) {
-            if (owner !== activeTag.id) continue
+            if (owner === activeTag.id) show.add(sessionId)
+          }
+          if (groups !== null) {
+            for (const sessionId of groups.matched) show.add(sessionId)
+          }
+          for (const sessionId of show) {
             rules.push(`[data-row-key="session:${cssSafe(sessionId)}"]{display:flex!important}`)
           }
           if (groups !== null) {
@@ -652,8 +688,10 @@ window.__ModuleLoader__.load({
             }
             for (const [workspaceId, count] of groups.byWorkspace) {
               const key = `workspace:${workspaceId}`
-              if (count === 0) hideGroup(key)
-              else badge(key, count)
+              if (count > 0) badge(key, count)
+              // A tagged workspace belongs to the result even when it holds no
+              // session; its coloured title is the only marker it needs.
+              else if (!groups.taggedWorkspaces.has(workspaceId)) hideGroup(key)
             }
             if (groups.ungrouped === 0) hideGroup('workspace:')
             else badge('workspace:', groups.ungrouped)
