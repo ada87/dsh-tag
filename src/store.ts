@@ -11,7 +11,6 @@ import {
 
 const RESERVED_IDS = new Set(['events', 'health', 'sessions', 'workspaces'])
 const NAMED_COLORS = new Set(['green', 'amber', 'blue', 'red', 'purple', 'gray'])
-const MAX_TAGS_PER_TARGET = 8
 const STATE_VERSION = 1
 
 /** Business-oriented defaults; IDs stay stable so assignments survive renames. */
@@ -31,14 +30,14 @@ interface PersistedTag {
 }
 
 interface PersistedWorkspace {
-  tagIds: string[]
+  tagId: string
   path?: string
 }
 
 interface PersistedState {
   version: number
   tags: PersistedTag[]
-  sessions: Record<string, string[]>
+  sessions: Record<string, string>
   workspaces: Record<string, PersistedWorkspace>
 }
 
@@ -47,14 +46,14 @@ export interface TagStore {
   createTag(label: unknown, color: unknown): Tag
   updateTag(id: string, patch: TagPatch): Tag
   deleteTag(id: string): void
-  assign(kind: 'session' | 'workspace', targetId: string, tagIds: readonly string[], path?: string): void
+  assign(kind: 'session' | 'workspace', targetId: string, tagId: string | null, path?: string): void
   close(): void
 }
 
 /**
- * State lives in `<DSH_HOME>/state/dsh-tag.json` (the same pattern as the
- * reference session-tag plugin). A file keeps the plugin independent of the
- * storage-domain composition, which is not mounted in every profile.
+ * State lives in `<DSH_HOME>/state/dsh-tag.json`. A file keeps the plugin
+ * independent of the storage-domain composition, which is not mounted in
+ * every profile.
  */
 export function openTagStore(
   file: string,
@@ -89,17 +88,15 @@ export function openTagStore(
   const snapshot = (): Snapshot => {
     const list = tags()
     const known = new Set(list.map(tag => tag.id))
-    const sessions: Record<string, string[]> = {}
-    for (const [id, ids] of Object.entries(state.sessions)) {
-      const filtered = ids.filter(tagId => known.has(tagId))
-      if (filtered.length > 0) sessions[id] = filtered
+    const sessions: Record<string, string> = {}
+    for (const [id, tagId] of Object.entries(state.sessions)) {
+      if (known.has(tagId)) sessions[id] = tagId
     }
     const workspaces: WorkspaceTag[] = []
     for (const [id, assignment] of Object.entries(state.workspaces)) {
-      const filtered = assignment.tagIds.filter(tagId => known.has(tagId))
-      if (filtered.length === 0) continue
+      if (!known.has(assignment.tagId)) continue
       const path = workspacePath(id) ?? assignment.path
-      workspaces.push({ id, ...(path === undefined || path.length === 0 ? {} : { path }), tagIds: filtered })
+      workspaces.push({ id, ...(path === undefined || path.length === 0 ? {} : { path }), tagId: assignment.tagId })
     }
     workspaces.sort((left, right) => left.id.localeCompare(right.id))
     return { version: PROTOCOL_VERSION, updatedAt: Date.now(), tags: list, sessions, workspaces }
@@ -133,15 +130,14 @@ export function openTagStore(
 
   const deleteTag = (id: string): void => {
     if (!state.tags.some(tag => tag.id === id)) throw new HttpError(404, 'tag-not-found', `no tag "${id}"`)
-    const sessions: Record<string, string[]> = {}
-    for (const [sessionId, ids] of Object.entries(state.sessions)) {
-      const next = ids.filter(tagId => tagId !== id)
-      if (next.length > 0) sessions[sessionId] = next
+    const sessions: Record<string, string> = {}
+    for (const [sessionId, tagId] of Object.entries(state.sessions)) {
+      if (tagId !== id) sessions[sessionId] = tagId
     }
     const workspaces: Record<string, PersistedWorkspace> = {}
     for (const [workspaceId, assignment] of Object.entries(state.workspaces)) {
-      const next = assignment.tagIds.filter(tagId => tagId !== id)
-      if (next.length > 0) workspaces[workspaceId] = { tagIds: next, ...(assignment.path === undefined ? {} : { path: assignment.path }) }
+      if (assignment.tagId === id) continue
+      workspaces[workspaceId] = { tagId: assignment.tagId, ...(assignment.path === undefined ? {} : { path: assignment.path }) }
     }
     save({ ...state, tags: state.tags.filter(tag => tag.id !== id), sessions, workspaces })
   }
@@ -149,37 +145,32 @@ export function openTagStore(
   const assign = (
     kind: 'session' | 'workspace',
     targetId: string,
-    rawTagIds: readonly string[],
+    tagId: string | null,
     path?: string,
   ): void => {
     const id = targetId.trim()
     if (id.length === 0 || id.length > 256) throw new HttpError(400, 'bad-target', 'a non-empty target id is required')
-    if (!Array.isArray(rawTagIds) || rawTagIds.length > MAX_TAGS_PER_TARGET) {
-      throw new HttpError(400, 'bad-tags', `tagIds must be an array of at most ${MAX_TAGS_PER_TARGET} ids`)
-    }
-    const ids: string[] = []
-    for (const tagId of rawTagIds) {
+    if (tagId !== null) {
       if (typeof tagId !== 'string' || tagId.length === 0 || tagId.length > 64) {
-        throw new HttpError(400, 'bad-tags', 'every tag id must be a non-empty string')
+        throw new HttpError(400, 'bad-tag', 'tagId must be a non-empty string or null')
       }
       if (!state.tags.some(tag => tag.id === tagId)) throw new HttpError(400, 'tag-not-found', `no tag "${tagId}"`)
-      if (!ids.includes(tagId)) ids.push(tagId)
     }
 
     if (kind === 'session') {
       const sessions = { ...state.sessions }
-      if (ids.length === 0) delete sessions[id]
-      else sessions[id] = ids
+      if (tagId === null) delete sessions[id]
+      else sessions[id] = tagId
       save({ ...state, sessions })
       return
     }
     const workspaces = { ...state.workspaces }
-    if (ids.length === 0) {
+    if (tagId === null) {
       delete workspaces[id]
     } else {
       const previous = workspaces[id]?.path
       const nextPath = typeof path === 'string' && path.trim().length > 0 ? path.trim().slice(0, 4096) : previous
-      workspaces[id] = { tagIds: ids, ...(nextPath === undefined ? {} : { path: nextPath }) }
+      workspaces[id] = { tagId, ...(nextPath === undefined ? {} : { path: nextPath }) }
     }
     save({ ...state, workspaces })
   }
@@ -221,23 +212,24 @@ function normalizeState(raw: unknown): PersistedState {
   const tags = normalizeTags(record.tags) ?? seed().tags
   const known = new Set(tags.map(tag => tag.id))
 
-  const sessions: Record<string, string[]> = {}
+  const sessions: Record<string, string> = {}
   if (record.sessions !== null && typeof record.sessions === 'object' && !Array.isArray(record.sessions)) {
     for (const [id, value] of Object.entries(record.sessions as Record<string, unknown>)) {
-      const ids = tagIdsOf(value).filter(tagId => known.has(tagId))
-      if (ids.length > 0) sessions[id] = ids
+      const tagId = tagIdOf(value)
+      if (tagId !== undefined && known.has(tagId)) sessions[id] = tagId
     }
   }
 
   const workspaces: Record<string, PersistedWorkspace> = {}
   if (record.workspaces !== null && typeof record.workspaces === 'object' && !Array.isArray(record.workspaces)) {
     for (const [id, value] of Object.entries(record.workspaces as Record<string, unknown>)) {
-      if (value === null || typeof value !== 'object' || Array.isArray(value)) continue
-      const entry = value as Record<string, unknown>
-      const ids = tagIdsOf(entry).filter(tagId => known.has(tagId))
-      if (ids.length === 0) continue
+      const tagId = tagIdOf(value)
+      if (tagId === undefined || !known.has(tagId)) continue
+      const entry = value !== null && typeof value === 'object' && !Array.isArray(value)
+        ? value as Record<string, unknown>
+        : {}
       workspaces[id] = {
-        tagIds: ids,
+        tagId,
         ...(typeof entry.path === 'string' && entry.path.length > 0 ? { path: entry.path.slice(0, 4096) } : {}),
       }
     }
@@ -270,15 +262,21 @@ function normalizeTags(value: unknown): PersistedTag[] | undefined {
   return tags
 }
 
-function tagIdsOf(value: unknown): string[] {
-  if (Array.isArray(value)) return value.filter(item => typeof item === 'string')
-  if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
-    const record = value as Record<string, unknown>
-    if (Array.isArray(record.tagIds)) return record.tagIds.filter(item => typeof item === 'string')
-    if (typeof record.tagId === 'string') return [record.tagId]
+/** Single-tag value; legacy arrays/objects collapse to their last entry. */
+function tagIdOf(value: unknown): string | undefined {
+  if (typeof value === 'string') return value
+  if (Array.isArray(value)) {
+    for (let index = value.length - 1; index >= 0; index -= 1) {
+      if (typeof value[index] === 'string') return value[index]
+    }
+    return undefined
   }
-  if (typeof value === 'string') return [value]
-  return []
+  if (value !== null && typeof value === 'object') {
+    const record = value as Record<string, unknown>
+    if (typeof record.tagId === 'string') return record.tagId
+    if (Array.isArray(record.tagIds)) return tagIdOf(record.tagIds)
+  }
+  return undefined
 }
 
 function normalizeLabel(value: unknown): string {

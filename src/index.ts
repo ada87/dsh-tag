@@ -140,10 +140,11 @@ function createHandler(
       if (method === 'PUT' && segments.length === 2 && (segments[0] === 'sessions' || segments[0] === 'workspaces')) {
         assertTrusted(ctx, req)
         const kind = segments[0] === 'sessions' ? 'session' : 'workspace'
-        const body = ((await readJson(req)) ?? {}) as { tagIds?: unknown; path?: unknown }
-        if (!Array.isArray(body.tagIds)) throw new HttpError(400, 'bad-tags', 'tagIds must be an array of tag ids')
+        const body = ((await readJson(req)) ?? {}) as { tagId?: unknown; path?: unknown }
+        const tagId = body.tagId === null ? null : typeof body.tagId === 'string' ? body.tagId : undefined
+        if (tagId === undefined) throw new HttpError(400, 'bad-tag', 'tagId must be a string or null')
         const path = typeof body.path === 'string' ? body.path : undefined
-        await store.assign(kind, segments[1]!, body.tagIds as string[], path)
+        store.assign(kind, segments[1]!, tagId, path)
         respondWithState(res, store, hub, 200, {})
         return
       }

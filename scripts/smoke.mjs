@@ -109,15 +109,21 @@ try {
   }
 
   {
-    const response = await call(route, 'PUT', '/tags/sessions/s1', { tagIds: ['design', 'code'] })
+    const response = await call(route, 'PUT', '/tags/sessions/s1', { tagId: 'design' })
     assert.equal(response.status, 200)
-    assert.deepEqual(response.json.snapshot.sessions.s1, ['design', 'code'])
+    assert.equal(response.json.snapshot.sessions.s1, 'design')
   }
 
   {
-    const response = await call(route, 'PUT', '/tags/workspaces/ws1', { tagIds: ['code'] })
+    const response = await call(route, 'PUT', '/tags/sessions/s1', { tagId: 'code' })
     assert.equal(response.status, 200)
-    assert.deepEqual(response.json.snapshot.workspaces, [{ id: 'ws1', path: 'D:/work/demo', tagIds: ['code'] }])
+    assert.equal(response.json.snapshot.sessions.s1, 'code', 'a new tag replaces the old one')
+  }
+
+  {
+    const response = await call(route, 'PUT', '/tags/workspaces/ws1', { tagId: 'code' })
+    assert.equal(response.status, 200)
+    assert.deepEqual(response.json.snapshot.workspaces, [{ id: 'ws1', path: 'D:/work/demo', tagId: 'code' }])
   }
 
   {
@@ -128,22 +134,27 @@ try {
   }
 
   {
-    await call(route, 'PUT', '/tags/sessions/s2', { tagIds: [created.id, 'design'] })
+    await call(route, 'PUT', '/tags/sessions/s2', { tagId: created.id })
     const response = await call(route, 'DELETE', `/tags/${created.id}`)
     assert.equal(response.status, 200)
-    assert.deepEqual(response.json.snapshot.sessions.s2, ['design'], 'deleting a tag keeps the remaining ones')
+    assert.equal(response.json.snapshot.sessions.s2, undefined, 'deleting a tag clears its assignment')
     assert.equal(response.json.snapshot.tags.length, 4)
   }
 
   {
-    const response = await call(route, 'PUT', '/tags/sessions/s1', { tagIds: [] })
+    const response = await call(route, 'PUT', '/tags/sessions/s1', { tagId: null })
     assert.equal(response.status, 200)
-    assert.equal(response.json.snapshot.sessions.s1, undefined, 'empty array clears the target')
+    assert.equal(response.json.snapshot.sessions.s1, undefined, 'null clears the target')
   }
 
   {
-    const response = await call(route, 'PUT', '/tags/sessions/s1', { tagIds: ['missing'] })
+    const response = await call(route, 'PUT', '/tags/sessions/s1', { tagId: 'missing' })
     assert.equal(response.status, 400)
+  }
+
+  {
+    const response = await call(route, 'PUT', '/tags/sessions/s1', {})
+    assert.equal(response.status, 400, 'tagId is required')
   }
 
   {
@@ -165,7 +176,8 @@ try {
   {
     const state = JSON.parse(readFileSync(join(home, 'state', 'dsh-tag.json'), 'utf8'))
     assert.equal(state.tags.length, 4, 'state file persisted')
-    assert.deepEqual(state.workspaces.ws1.tagIds, ['code'])
+    assert.equal(state.workspaces.ws1.tagId, 'code')
+    assert.equal(state.sessions.s1, undefined)
   }
 
   console.log('dsh-tag host smoke: ok')

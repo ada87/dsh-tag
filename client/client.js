@@ -45,32 +45,36 @@ window.__ModuleLoader__.load({
       nav: '标签',
       menuSession: '标签',
       menuWorkspace: '工作区标签',
-      clear: '清除全部标签',
+      clear: '清除标签',
       noTags: '还没有标签，先去 设置 → 标签 创建',
       newPlaceholder: '新标签文字…',
       add: '添加',
       remove: '删除',
       confirmDelete: '删除标签「{label}」？对应标记也会清除。',
       settingsTitle: '标签',
-      settingsDesc: '会话和工作区共用同一套标签。右键会话或工作区即可打标签；标题颜色取最后一次打上的标签。',
+      settingsDesc: '会话和工作区共用同一套标签。右键会话或工作区即可打标签；标题颜色就是标签颜色。',
       empty: '还没有标签，先创建一个。',
       failed: '标签操作失败',
+      filterAll: '全部',
+      filterTitle: '按标签过滤会话',
     }
 
     const en = {
       nav: 'Tags',
       menuSession: 'Tags',
       menuWorkspace: 'Workspace tags',
-      clear: 'Clear all tags',
+      clear: 'Clear tag',
       noTags: 'No tags yet — create one in Settings → Tags',
       newPlaceholder: 'New tag label…',
       add: 'Add',
       remove: 'Delete',
       confirmDelete: 'Delete “{label}”? Its assignments will be cleared.',
       settingsTitle: 'Tags',
-      settingsDesc: 'Sessions and workspaces share this tag set. Right-click a row to toggle tags; the last tag colors the title.',
+      settingsDesc: 'Sessions and workspaces share this tag set. Right-click a row to set a tag; the title uses the tag color.',
       empty: 'No tags yet — create one below.',
       failed: 'Tag update failed',
+      filterAll: 'All',
+      filterTitle: 'Filter sessions by tag',
     }
 
     const CSS = `
@@ -98,6 +102,13 @@ window.__ModuleLoader__.load({
 .dsh-tag-empty{padding:10px 0;font-size:13px;color:var(--dsw-alias-label-tertiary,#888)}
 .dsh-tag-hover{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;line-height:17px;color:#cfd3d6}
 .dsh-tag-hoverItem{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.dsh-tag-filter{display:flex;align-items:center;gap:6px;flex:none;box-sizing:border-box;width:100%;padding:2px var(--dsh-sidebar-row-padding,8px) 6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+.dsh-tag-filter::-webkit-scrollbar{display:none}
+.dsh-tag-filterAll{height:22px;padding:0 9px;border:1px solid var(--dsw-alias-border-l4,rgba(127,127,127,.28));border-radius:999px;background:transparent;color:var(--dsw-alias-label-tertiary,#888);font:inherit;font-size:12px;line-height:1;cursor:pointer;flex:none;white-space:nowrap}
+.dsh-tag-filterAll.is-active{color:var(--dsw-alias-label-primary,#111);border-color:var(--dsw-alias-label-caption,#999);background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.12))}
+.dsh-tag-filterBlock{width:18px;height:18px;padding:0;border:2px solid transparent;border-radius:6px;flex:none;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.dsh-tag-filterBlock.is-active{border-color:var(--dsw-alias-label-primary,#111)}
+[data-dsh-tag-hidden]{display:none!important}
 `
 
     /** Menu dot as an inline SVG so every tag carries its own color. */
@@ -171,25 +182,38 @@ window.__ModuleLoader__.load({
           const tag = state.tags.find(item => item.id === tagId)
           return tag === undefined ? null : textColor(tag.color)
         }
-        function primaryColor(tagIds) {
-          if (!Array.isArray(tagIds) || tagIds.length === 0) return null
-          return colorOfTag(tagIds[tagIds.length - 1])
-        }
         function paint() {
           const rules = []
-          for (const [sessionId, tagIds] of Object.entries(state.sessions)) {
-            const color = primaryColor(tagIds)
+          for (const [sessionId, tagId] of Object.entries(state.sessions)) {
+            const color = colorOfTag(tagId)
             if (color !== null) rules.push(rule('session', sessionId, color))
           }
           for (const workspace of state.workspaces) {
-            const color = primaryColor(workspace.tagIds)
+            const color = colorOfTag(workspace.tagId)
             if (color !== null) rules.push(rule('workspace', workspace.id, color))
           }
           colorStyle.textContent = rules.join('\n')
+          renderFilter()
+          applyFilter()
         }
         function rule(kind, id, color) {
           const safe = String(id).replace(/["\\\r\n]/g, '')
           return `[data-row-key="${kind}:${safe}"] [class*="_title"]{color:${color}}`
+        }
+
+        function tagIdOf(value) {
+          if (typeof value === 'string') return value
+          if (Array.isArray(value)) {
+            for (let index = value.length - 1; index >= 0; index -= 1) {
+              if (typeof value[index] === 'string') return value[index]
+            }
+            return undefined
+          }
+          if (value !== null && typeof value === 'object') {
+            if (typeof value.tagId === 'string') return value.tagId
+            if (Array.isArray(value.tagIds)) return tagIdOf(value.tagIds)
+          }
+          return undefined
         }
 
         function normalize(data) {
@@ -197,29 +221,141 @@ window.__ModuleLoader__.load({
           const sessions = {}
           if (data && data.sessions && typeof data.sessions === 'object') {
             for (const [id, value] of Object.entries(data.sessions)) {
-              const ids = Array.isArray(value)
-                ? value.filter(item => typeof item === 'string')
-                : typeof value === 'string'
-                  ? [value]
-                  : []
-              if (ids.length > 0) sessions[id] = ids
+              const tagId = tagIdOf(value)
+              if (tagId !== undefined) sessions[id] = tagId
             }
           }
           const workspaces = (Array.isArray(data && data.workspaces) ? data.workspaces : [])
             .map(item => {
-              const ids = Array.isArray(item && item.tagIds)
-                ? item.tagIds.filter(value => typeof value === 'string')
-                : typeof (item && item.tagId) === 'string'
-                  ? [item.tagId]
-                  : []
+              const tagId = tagIdOf(item)
               return {
                 id: String((item && item.id) || ''),
                 ...(item && typeof item.path === 'string' ? { path: item.path } : {}),
-                tagIds: ids,
+                tagId,
               }
             })
-            .filter(item => item.id.length > 0 && item.tagIds.length > 0)
+            .filter(item => item.id.length > 0 && typeof item.tagId === 'string' && item.tagId.length > 0)
           return { tags, sessions, workspaces }
+        }
+
+        // ── Filter bar ─────────────────────────────────────────────────────────
+        const FILTER_KEY = 'dsh.tag.filter.v1'
+        let filterTagId = readFilter()
+        let filterBar = null
+        let filterObserver = null
+        let filterTimer = 0
+
+        function readFilter() {
+          try {
+            const value = window.localStorage.getItem(FILTER_KEY)
+            return typeof value === 'string' && value.length > 0 ? value : null
+          } catch {
+            return null
+          }
+        }
+        function writeFilter() {
+          try {
+            if (filterTagId === null) window.localStorage.removeItem(FILTER_KEY)
+            else window.localStorage.setItem(FILTER_KEY, filterTagId)
+          } catch {
+            // Blocked storage only loses persistence; the filter still applies.
+          }
+        }
+        function ensureFilterBar() {
+          if (filterBar !== null) return filterBar
+          filterBar = document.createElement('div')
+          filterBar.className = 'dsh-tag-filter'
+          filterBar.setAttribute('role', 'toolbar')
+          filterBar.setAttribute('aria-label', t('filterTitle'))
+          return filterBar
+        }
+        /** Rebuild the colour blocks only when the tag list or the selection changed. */
+        function renderFilter() {
+          if (filterBar === null) return
+          const tags = state.tags
+          filterBar.hidden = tags.length === 0
+          if (tags.length === 0) {
+            filterBar.replaceChildren()
+            return
+          }
+          if (filterTagId !== null && !tags.some(tag => tag.id === filterTagId)) {
+            filterTagId = null
+            writeFilter()
+          }
+          const all = document.createElement('button')
+          all.type = 'button'
+          all.className = 'dsh-tag-filterAll' + (filterTagId === null ? ' is-active' : '')
+          all.textContent = t('filterAll')
+          all.title = t('filterAll')
+          all.setAttribute('aria-pressed', String(filterTagId === null))
+          all.addEventListener('click', () => {
+            filterTagId = null
+            writeFilter()
+            renderFilter()
+            applyFilter()
+          })
+          const blocks = tags.map(tag => {
+            const block = document.createElement('button')
+            block.type = 'button'
+            block.className = 'dsh-tag-filterBlock' + (filterTagId === tag.id ? ' is-active' : '')
+            block.style.background = swatch(tag.color)
+            block.title = tag.label
+            block.setAttribute('aria-label', tag.label)
+            block.setAttribute('aria-pressed', String(filterTagId === tag.id))
+            block.addEventListener('click', () => {
+              filterTagId = filterTagId === tag.id ? null : tag.id
+              writeFilter()
+              renderFilter()
+              applyFilter()
+            })
+            return block
+          })
+          filterBar.replaceChildren(all, ...blocks)
+        }
+        /** The session list's scroll container and the node to insert the bar before. */
+        function filterAnchor() {
+          const rows = document.querySelectorAll('[data-row-key^="session:"]')
+          if (rows.length === 0) return null
+          let node = rows[0]
+          while (node !== null && node !== document.body) {
+            const overflow = getComputedStyle(node).overflowY
+            if (overflow === 'auto' || overflow === 'scroll') {
+              const parent = node.parentElement
+              if (parent === null) return null
+              return { parent, before: node }
+            }
+            node = node.parentElement
+          }
+          return null
+        }
+        function mountFilter() {
+          const place = filterAnchor()
+          if (place === null) return false
+          const bar = ensureFilterBar()
+          if (bar.parentElement !== place.parent) place.parent.insertBefore(bar, place.before)
+          renderFilter()
+          return true
+        }
+        function applyFilter() {
+          const active = filterTagId !== null && state.tags.some(tag => tag.id === filterTagId)
+          for (const row of document.querySelectorAll('[data-row-key^="session:"]')) {
+            if (!active) {
+              row.removeAttribute('data-dsh-tag-hidden')
+              continue
+            }
+            const id = (row.getAttribute('data-row-key') || '').slice('session:'.length)
+            if (state.sessions[id] === filterTagId) row.removeAttribute('data-dsh-tag-hidden')
+            else row.setAttribute('data-dsh-tag-hidden', '')
+          }
+        }
+        /** Collapse one burst of React mutations into one mount + filter pass. */
+        function scheduleFilter() {
+          if (filterTimer !== 0) return
+          filterTimer = window.setTimeout(() => {
+            filterTimer = 0
+            mountFilter()
+            applyFilter()
+          }, 50)
         }
 
         async function refresh() {
@@ -284,11 +420,11 @@ window.__ModuleLoader__.load({
           return data
         }
 
-        function setTags(kind, target, tagIds) {
+        function setTag(kind, target, tagId) {
           const base = kind === 'session' ? 'sessions' : 'workspaces'
           const body = kind === 'workspace' && typeof target.path === 'string'
-            ? { tagIds, path: target.path }
-            : { tagIds }
+            ? { tagId, path: target.path }
+            : { tagId }
           return request('PUT', `/${base}/${encodeURIComponent(target.id)}`, body)
         }
 
@@ -298,29 +434,29 @@ window.__ModuleLoader__.load({
          */
         function tagMenu(kind, target) {
           const current = kind === 'session'
-            ? (state.sessions[target.id] || [])
-            : ((state.workspaces.find(item => item.id === target.id) || {}).tagIds || [])
+            ? state.sessions[target.id]
+            : (state.workspaces.find(item => item.id === target.id) || {}).tagId
           const parentLabel = kind === 'session' ? t('menuSession') : t('menuWorkspace')
           if (state.tags.length === 0) {
             return [{ id: 'tags', label: parentLabel, disabled: true, children: [{ id: 'empty', label: t('noTags'), disabled: true }] }]
           }
           const children = state.tags.map(tag => {
-            const active = current.includes(tag.id)
+            const active = current === tag.id
             return {
               id: `tag:${tag.id}`,
               label: `${active ? '✓ ' : ''}${tag.label}`,
               icon: { key: 'dsh-tag.dot', src: dotSrc(tag.color) },
               failureLabel: t('failed'),
-              run: () => setTags(kind, target, active ? current.filter(id => id !== tag.id) : [...current, tag.id]),
+              run: () => setTag(kind, target, active ? null : tag.id),
             }
           })
-          if (current.length > 0) {
+          if (typeof current === 'string' && current.length > 0) {
             children.push({
               id: 'clear',
               label: t('clear'),
               separatorBefore: true,
               failureLabel: t('failed'),
-              run: () => setTags(kind, target, []),
+              run: () => setTag(kind, target, null),
             })
           }
           return [{
@@ -468,21 +604,21 @@ window.__ModuleLoader__.load({
 
         function HoverTag({ sessionId }) {
           const snapshot = React.useSyncExternalStore(subscribe, getState)
-          const tagIds = snapshot.sessions[sessionId] || []
-          const tags = tagIds
-            .map(id => snapshot.tags.find(item => item.id === id))
-            .filter(tag => tag !== undefined)
-          if (tags.length === 0) return null
-          return h('div', { className: 'dsh-tag-hover' }, tags.map(tag => h('span', {
-            key: tag.id,
+          const tagId = snapshot.sessions[sessionId]
+          const tag = snapshot.tags.find(item => item.id === tagId)
+          if (tag === undefined) return null
+          return h('div', { className: 'dsh-tag-hover' }, h('span', {
             className: 'dsh-tag-hoverItem',
           },
           h('span', { className: 'dsh-tag-dot', style: { background: swatch(tag.color) }, 'aria-hidden': 'true' }),
-          tag.label)))
+          tag.label))
         }
 
         // ── Wiring ─────────────────────────────────────────────────────────────
         ctx.effect(() => {
+          filterObserver = new MutationObserver(scheduleFilter)
+          filterObserver.observe(document.body, { childList: true, subtree: true })
+          scheduleFilter()
           const onVisibility = () => {
             if (document.hidden) {
               if (retryTimer !== undefined) {
@@ -504,6 +640,21 @@ window.__ModuleLoader__.load({
           return () => {
             disposed = true
             document.removeEventListener('visibilitychange', onVisibility)
+            if (filterObserver !== null) {
+              filterObserver.disconnect()
+              filterObserver = null
+            }
+            if (filterTimer !== 0) {
+              window.clearTimeout(filterTimer)
+              filterTimer = 0
+            }
+            if (filterBar !== null) {
+              filterBar.remove()
+              filterBar = null
+            }
+            for (const row of document.querySelectorAll('[data-dsh-tag-hidden]')) {
+              row.removeAttribute('data-dsh-tag-hidden')
+            }
             if (source !== undefined) {
               source.close()
               source = undefined

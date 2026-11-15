@@ -14,9 +14,7 @@ export interface TagValue {
 /** Stored assignment. The record key is `session:<id>` or `workspace:<id>`. */
 export interface AssignmentValue {
   targetId: string
-  tagIds: string[]
-  /** Legacy single-tag field; still accepted on read. */
-  tagId?: string
+  tagId: string
   path?: string
   updatedAt: number
 }
@@ -31,8 +29,7 @@ export interface Tag {
 export interface WorkspaceTag {
   id: string
   path?: string
-  /** Ordered by application time; the last one colors the title. */
-  tagIds: string[]
+  tagId: string
 }
 
 /**
@@ -43,7 +40,7 @@ export interface Snapshot {
   version: number
   updatedAt: number
   tags: Tag[]
-  sessions: Record<string, string[]>
+  sessions: Record<string, string>
   workspaces: WorkspaceTag[]
 }
 
