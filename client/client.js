@@ -3,10 +3,12 @@
  *
  * - Colors session and workspace titles with generated CSS rules keyed by the
  *   stable `data-row-key` attribute (no DOM mutation per row).
- * - Adds a "Tags" submenu to the session and workspace context menus. Each tag
- *   is a toggle: click to apply, click again to remove. Multiple tags can be
- *   applied; the last one colors the title.
+ * - Adds a "Tags" submenu to the session and workspace context menus. Each row
+ *   carries one tag: click to apply, click the checked tag to remove.
  * - Settings page renames, recolors and deletes tags.
+ * - The colour bar above the session list filters sessions; it uses the
+ *   `workspaces`/`sessions` services to open matching groups and hide empty
+ *   ones, then hides non-matching rows with generated CSS.
  *
  * Reads `/tags`; mutations go to `/tags/...` with the dsh browser session.
  */
@@ -58,8 +60,9 @@ window.__ModuleLoader__.load({
       filterAll: '全部',
       filterTitle: '按标签过滤会话',
       filterStatus: '过滤：{label}',
+      filterStatusCount: '过滤：{label} · {count}',
       filterClear: '清除过滤',
-      filterEmpty: '当前列表里没有带「{label}」标签的会话',
+      filterEmpty: '没有带「{label}」标签的会话',
     }
 
     const en = {
@@ -79,8 +82,9 @@ window.__ModuleLoader__.load({
       filterAll: 'All',
       filterTitle: 'Filter sessions by tag',
       filterStatus: 'Filter: {label}',
+      filterStatusCount: 'Filter: {label} · {count}',
       filterClear: 'Clear filter',
-      filterEmpty: 'No sessions tagged “{label}” in the current list',
+      filterEmpty: 'No sessions tagged “{label}”',
     }
 
     const CSS = `
@@ -257,9 +261,27 @@ window.__ModuleLoader__.load({
         let filterWrap = null
         let filterBar = null
         let filterEmpty = null
+        let filterStatus = null
         let filterObserver = null
         let filterTimer = 0
         let filterSignature = ''
+
+        /**
+         * Live list data from dsh's workspace and session services. The DOM only
+         * contains expanded rows, so hiding non-matching rows is not enough to
+         * build a real filter: counts, empty groups and auto-expansion need the
+         * whole tree. Both services are optional so an older dsh still works.
+         */
+        let workspaceMembers = null // Map<workspaceId, Set<sessionId>>
+        let sessionCatalog = null // Set<sessionId>
+        let archivedSessions = new Set()
+        /** Workspace row keys this filter opened; closed again when it clears. */
+        const autoExpanded = new Set()
+        /** Groups whose "show more sessions" button the filter pressed. */
+        const autoRevealed = new Set()
+        /** Groups the user collapsed while a filter is active; never re-open them. */
+        const userCollapsed = new Set()
+        let autoClicking = 0
 
         function readFilter() {
           try {
@@ -278,10 +300,29 @@ window.__ModuleLoader__.load({
           }
         }
         function clearFilter() {
+          restoreExpanded()
+          userCollapsed.clear()
           filterTagId = null
           writeFilter()
           renderFilter()
           applyFilter()
+        }
+        function selectFilter(tagId) {
+          if (tagId === filterTagId) {
+            clearFilter()
+            return
+          }
+          // Groups opened for the previous tag go back to their saved state,
+          // except those that also match the new tag and stay open.
+          restoreExpanded(expandedKeys(computeGroups(tagId)))
+          userCollapsed.clear()
+          filterTagId = tagId
+          writeFilter()
+          renderFilter()
+          applyFilter()
+        }
+        function cssSafe(value) {
+          return String(value).replace(/["\\\r\n]/g, '')
         }
         /** Our own writes are not React updates; pausing the observer avoids feedback loops. */
         function withoutFilterObserver(task) {
@@ -318,12 +359,19 @@ window.__ModuleLoader__.load({
               filterSignature = ''
               withoutFilterObserver(() => filterBar.replaceChildren())
             }
+            if (filterTagId !== null && state.loaded) {
+              restoreExpanded()
+              filterTagId = null
+              writeFilter()
+            }
+            filterStatus = null
             filterEmpty.hidden = true
             return
           }
           if (filterTagId !== null && !tags.some(tag => tag.id === filterTagId)) {
             filterTagId = null
             writeFilter()
+            restoreExpanded()
           }
           // The MutationObserver re-mounts the bar after React updates. Rebuilding
           // the buttons on every pass would replace the node between a real
@@ -347,18 +395,10 @@ window.__ModuleLoader__.load({
             block.title = tag.label
             block.setAttribute('aria-label', tag.label)
             block.setAttribute('aria-pressed', String(filterTagId === tag.id))
-            block.addEventListener('click', () => {
-              if (filterTagId === tag.id) clearFilter()
-              else {
-                filterTagId = tag.id
-                writeFilter()
-                renderFilter()
-                applyFilter()
-              }
-            })
+            block.addEventListener('click', () => selectFilter(tag.id))
             return block
           })
-          const status = activeTag === undefined
+          filterStatus = activeTag === undefined
             ? null
             : (() => {
               const button = document.createElement('button')
@@ -370,11 +410,13 @@ window.__ModuleLoader__.load({
               button.addEventListener('click', clearFilter)
               return button
             })()
-          withoutFilterObserver(() => filterBar.replaceChildren(all, ...blocks, ...(status === null ? [] : [status])))
+          withoutFilterObserver(() => filterBar.replaceChildren(all, ...blocks, ...(filterStatus === null ? [] : [filterStatus])))
         }
         /** The session list's scroll container and the node to insert the bar before. */
         function filterAnchor() {
-          const rows = document.querySelectorAll('[data-row-key^="session:"]')
+          // Workspace rows are also present when every group is collapsed, so the
+          // bar can be mounted even before a single session row is rendered.
+          const rows = document.querySelectorAll('[data-row-key^="session:"], [data-row-key^="workspace:"], [data-row-key="empty"]')
           if (rows.length === 0) return null
           let node = rows[0]
           while (node !== null && node !== document.body) {
@@ -398,36 +440,227 @@ window.__ModuleLoader__.load({
           renderFilter()
           return true
         }
+
+        /**
+         * Every existing session carrying the tag, as far as dsh's own list is
+         * concerned. Derived data is unavailable on older builds, and then the
+         * filter falls back to the rows currently in the DOM.
+         */
+        function computeGroups(tagId) {
+          if (workspaceMembers === null || sessionCatalog === null) return null
+          const matched = new Set()
+          for (const [sessionId, owner] of Object.entries(state.sessions)) {
+            if (owner !== tagId) continue
+            if (!sessionCatalog.has(sessionId)) continue
+            if (archivedSessions.has(sessionId)) continue
+            matched.add(sessionId)
+          }
+          const byWorkspace = new Map()
+          const idsByWorkspace = new Map()
+          const grouped = new Set()
+          for (const [workspaceId, ids] of workspaceMembers) {
+            const hits = new Set()
+            for (const id of ids) {
+              grouped.add(id)
+              if (matched.has(id)) hits.add(id)
+            }
+            idsByWorkspace.set(workspaceId, hits)
+            byWorkspace.set(workspaceId, hits.size)
+          }
+          const ungroupedIds = new Set()
+          for (const id of matched) {
+            if (!grouped.has(id)) ungroupedIds.add(id)
+          }
+          return { matched, byWorkspace, idsByWorkspace, ungroupedIds, ungrouped: ungroupedIds.size, total: matched.size }
+        }
+
+        function renderedSessionIds() {
+          const ids = new Set()
+          for (const row of document.querySelectorAll('[data-row-key^="session:"]')) {
+            ids.add((row.getAttribute('data-row-key') || '').slice('session:'.length))
+          }
+          return ids
+        }
+
+        function renderedMatches(tagId) {
+          const ids = renderedSessionIds()
+          let count = 0
+          for (const id of ids) {
+            if (state.sessions[id] === tagId) count += 1
+          }
+          return count
+        }
+
+        /** Row keys of the groups that hold at least one match. */
+        function expandedKeys(groups) {
+          const keys = new Set()
+          if (groups === null) return keys
+          for (const [workspaceId, count] of groups.byWorkspace) {
+            if (count > 0) keys.add(`workspace:${workspaceId}`)
+          }
+          if (groups.ungrouped > 0) keys.add('workspace:')
+          return keys
+        }
+
+        /**
+         * Open the groups that hold matches so the filter reads like a result
+         * list instead of a tree the user has to unfold. Only groups this filter
+         * opened are recorded, and clearing it closes exactly those again.
+         */
+        function expandMatches(groups) {
+          for (const key of expandedKeys(groups)) {
+            if (autoExpanded.has(key) || userCollapsed.has(key)) continue
+            const row = document.querySelector(`[data-row-key="${cssSafe(key)}"]`)
+            if (row === null || row.getAttribute('aria-expanded') !== 'false') continue
+            autoClicking += 1
+            try {
+              // The group header's own onClick toggles and persists expansion.
+              row.click()
+            } finally {
+              autoClicking -= 1
+            }
+            autoExpanded.add(key)
+          }
+        }
+        function restoreExpanded(keep) {
+          if (autoRevealed.size !== 0) {
+            for (const key of [...autoRevealed]) {
+              if (keep !== undefined && keep.has(key)) continue
+              autoRevealed.delete(key)
+              const group = key.slice('workspace:'.length)
+              const button = document.querySelector(`[data-row-key="overflow:${cssSafe(group)}"]`)
+              if (button === null || button.getAttribute('aria-expanded') !== 'true') continue
+              autoClicking += 1
+              try {
+                button.click()
+              } finally {
+                autoClicking -= 1
+              }
+            }
+          }
+          if (autoExpanded.size === 0) return
+          const keys = [...autoExpanded]
+          autoExpanded.clear()
+          for (const key of keys) {
+            if (keep !== undefined && keep.has(key)) {
+              // Still relevant to the next filter: leave it open and owned.
+              autoExpanded.add(key)
+              continue
+            }
+            const row = document.querySelector(`[data-row-key="${cssSafe(key)}"]`)
+            if (row === null || row.getAttribute('aria-expanded') !== 'true') continue
+            autoClicking += 1
+            try {
+              row.click()
+            } finally {
+              autoClicking -= 1
+            }
+          }
+        }
+
+        /**
+         * A group shows five sessions plus a "show more" row. When a match sits
+         * beyond that watermark, press the row until the match is rendered so
+         * the filter never points at a session the user cannot see.
+         */
+        function revealMatches(groups) {
+          if (groups === null) return
+          for (const key of expandedKeys(groups)) {
+            if (userCollapsed.has(key)) continue
+            const workspaceId = key.slice('workspace:'.length)
+            const hits = workspaceId === '' ? groups.ungroupedIds : groups.idsByWorkspace.get(workspaceId)
+            if (hits === undefined) continue
+            const missingFrom = (rendered) => {
+              for (const id of hits) {
+                if (!rendered.has(id)) return true
+              }
+              return false
+            }
+            if (!missingFrom(renderedSessionIds())) continue
+            for (let step = 0; step < 40; step += 1) {
+              const button = document.querySelector(`[data-row-key="overflow:${cssSafe(workspaceId)}"]`)
+              if (button === null || button.getAttribute('aria-expanded') === 'true') break
+              autoClicking += 1
+              try {
+                button.click()
+              } finally {
+                autoClicking -= 1
+              }
+              autoRevealed.add(key)
+              if (!missingFrom(renderedSessionIds())) break
+            }
+          }
+        }
+
+        function updateFilterStatus(activeTag, groups) {
+          if (filterStatus === null) return
+          let text
+          if (groups === null || groups.total === 0) text = t('filterStatus', { label: activeTag.label })
+          else text = t('filterStatusCount', { label: activeTag.label, count: groups.total })
+          if (filterStatus.textContent !== text) filterStatus.textContent = text
+        }
+        function updateFilterEmpty(activeTag, groups) {
+          if (filterEmpty === null) return
+          const empty = groups === null
+            ? renderedMatches(activeTag.id) === 0
+            : groups.total === 0 && renderedMatches(activeTag.id) === 0
+          if (empty) {
+            const text = t('filterEmpty', { label: activeTag.label })
+            if (filterEmpty.textContent !== text) filterEmpty.textContent = text
+            if (filterEmpty.hidden) filterEmpty.hidden = false
+          } else if (!filterEmpty.hidden) {
+            filterEmpty.hidden = true
+          }
+        }
+
         /**
          * Filtering is pure CSS: one rule hides every session row, later rules
-         * re-show the matching ids. No per-row attributes means no DOM churn
-         * while React renders or the user expands a workspace.
+         * re-show the matching ids. Groups without matches lose their header, so
+         * an active filter never leaves a column of empty sections behind.
          */
         function applyFilter() {
           const activeTag = filterTagId === null ? undefined : state.tags.find(tag => tag.id === filterTagId)
-          let matches = 0
-          if (activeTag !== undefined) {
-            const rules = ['[data-row-key^="session:"]{display:none!important}']
-            for (const row of document.querySelectorAll('[data-row-key^="session:"]')) {
-              const id = (row.getAttribute('data-row-key') || '').slice('session:'.length)
-              if (state.sessions[id] !== activeTag.id) continue
-              matches += 1
-              const safe = id.replace(/["\\\r\n]/g, '')
-              rules.push(`[data-row-key="session:${safe}"]{display:flex!important}`)
-            }
-            filterStyle.textContent = rules.join('\n')
-          } else {
-            filterStyle.textContent = ''
+          if (activeTag === undefined) {
+            if (filterStyle.textContent !== '') filterStyle.textContent = ''
+            if (filterEmpty !== null) filterEmpty.hidden = true
+            return
           }
-          if (filterEmpty !== null) {
-            if (activeTag !== undefined && matches === 0) {
-              const text = t('filterEmpty', { label: activeTag.label })
-              if (filterEmpty.textContent !== text) filterEmpty.textContent = text
-              if (filterEmpty.hidden) filterEmpty.hidden = false
-            } else if (!filterEmpty.hidden) {
-              filterEmpty.hidden = true
-            }
+          const groups = computeGroups(activeTag.id)
+          expandMatches(groups)
+          revealMatches(groups)
+          const rules = ['[data-row-key^="session:"]{display:none!important}']
+          // A revealed group shows a "collapse sessions" control that a filter
+          // has no use for; hidden groups lose their whole group footprint.
+          rules.push('[data-row-key^="overflow:"][aria-expanded="true"]{display:none!important}')
+          for (const [sessionId, owner] of Object.entries(state.sessions)) {
+            if (owner !== activeTag.id) continue
+            rules.push(`[data-row-key="session:${cssSafe(sessionId)}"]{display:flex!important}`)
           }
+          if (groups !== null) {
+            const hideGroup = (key) => {
+              rules.push(`[data-row-key="${cssSafe(key)}"]{display:none!important}`)
+              rules.push(`span:has(> [data-row-key="${cssSafe(key)}"]){display:none!important}`)
+              rules.push(`[data-row-key="overflow:${cssSafe(key.slice('workspace:'.length))}"]{display:none!important}`)
+            }
+            const badge = (key, count) => {
+              rules.push(
+                `[data-row-key="${cssSafe(key)}"] [class*="_title"]::after{content:"${count}";` +
+                'margin-left:6px;padding:0 5px;border-radius:7px;display:inline-block;' +
+                'background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.16));' +
+                'color:var(--dsw-alias-label-tertiary,#888);font-size:11px;line-height:15px;font-weight:400}',
+              )
+            }
+            for (const [workspaceId, count] of groups.byWorkspace) {
+              const key = `workspace:${workspaceId}`
+              if (count === 0) hideGroup(key)
+              else badge(key, count)
+            }
+            if (groups.ungrouped === 0) hideGroup('workspace:')
+            else badge('workspace:', groups.ungrouped)
+          }
+          filterStyle.textContent = rules.join('\n')
+          updateFilterStatus(activeTag, groups)
+          updateFilterEmpty(activeTag, groups)
         }
         /** Collapse one burst of React mutations into one mount + filter pass. */
         function scheduleFilter() {
@@ -696,10 +929,78 @@ window.__ModuleLoader__.load({
         }
 
         // ── Wiring ─────────────────────────────────────────────────────────────
+        /**
+         * Membership of every session, not only the rendered rows. Optional:
+         * when either service is missing the filter keeps its DOM-only behaviour.
+         */
+        ctx.inject(['workspaces', 'sessions'], (scope) => {
+          let signature = ''
+          const sync = () => {
+            try {
+              const ws = scope.workspaces.list.getSnapshot()
+              const list = scope.sessions.list.getSnapshot()
+              if (!Array.isArray(ws.items) || !Array.isArray(list.ids)) return
+              if (ws.phase !== 'ready' || list.phase !== 'ready') return
+              const items = ws.items
+              const ids = list.ids
+              const next = items.map(item => [String(item.workspaceId), (item.sessionIds || []).map(String)])
+              const archived = (ws.archivedSessionIds || []).map(String)
+              const nextSignature = JSON.stringify([next, archived, ids])
+              if (nextSignature === signature) return
+              signature = nextSignature
+              workspaceMembers = new Map(next.map(([id, members]) => [id, new Set(members)]))
+              archivedSessions = new Set(archived)
+              sessionCatalog = new Set(ids.map(String))
+              scheduleFilter()
+            } catch {
+              // A build without these snapshots keeps the DOM-only fallback.
+            }
+          }
+          sync()
+          scope.effect(() => {
+            const offWorkspaces = scope.workspaces.list.subscribe(sync)
+            const offSessions = scope.sessions.list.subscribe(sync)
+            return () => {
+              offWorkspaces()
+              offSessions()
+            }
+          }, 'dsh-tag: workspace membership')
+        })
+
         ctx.effect(() => {
           filterObserver = new MutationObserver(scheduleFilter)
           filterObserver.observe(document.body, { childList: true, subtree: true })
           scheduleFilter()
+          // A manual toggle of a group we opened is respected; clearing the
+          // filter must not undo a choice the user just made.
+          const onGroupClick = (event) => {
+            if (autoClicking > 0) return
+            const target = event.target
+            if (!(target instanceof Element)) return
+            const overflow = target.closest('[data-row-key^="overflow:"]')
+            if (overflow !== null) {
+              const key = `workspace:${overflow.getAttribute('data-row-key').slice('overflow:'.length)}`
+              if (overflow.getAttribute('aria-expanded') === 'true') {
+                // "Collapse sessions": keep the filter from pressing it again.
+                userCollapsed.add(key)
+                autoRevealed.delete(key)
+              } else {
+                userCollapsed.delete(key)
+              }
+              return
+            }
+            if (target.closest('button') !== null) return
+            const row = target.closest('[data-row-key^="workspace:"]')
+            if (row === null) return
+            const key = row.getAttribute('data-row-key')
+            autoExpanded.delete(key)
+            autoRevealed.delete(key)
+            // Collapsing a group under an active filter is a user decision;
+            // expanding it again cancels that decision.
+            if (row.getAttribute('aria-expanded') === 'true') userCollapsed.add(key)
+            else userCollapsed.delete(key)
+          }
+          document.addEventListener('click', onGroupClick, true)
           const onVisibility = () => {
             if (document.hidden) {
               if (retryTimer !== undefined) {
@@ -721,6 +1022,7 @@ window.__ModuleLoader__.load({
           return () => {
             disposed = true
             document.removeEventListener('visibilitychange', onVisibility)
+            document.removeEventListener('click', onGroupClick, true)
             if (filterObserver !== null) {
               filterObserver.disconnect()
               filterObserver = null
@@ -734,6 +1036,7 @@ window.__ModuleLoader__.load({
               filterWrap = null
               filterBar = null
               filterEmpty = null
+              filterStatus = null
             }
             filterStyle.textContent = ''
             if (source !== undefined) {
