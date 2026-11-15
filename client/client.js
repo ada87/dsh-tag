@@ -57,6 +57,9 @@ window.__ModuleLoader__.load({
       failed: '标签操作失败',
       filterAll: '全部',
       filterTitle: '按标签过滤会话',
+      filterStatus: '过滤：{label}',
+      filterClear: '清除过滤',
+      filterEmpty: '当前列表里没有带「{label}」标签的会话',
     }
 
     const en = {
@@ -75,6 +78,9 @@ window.__ModuleLoader__.load({
       failed: 'Tag update failed',
       filterAll: 'All',
       filterTitle: 'Filter sessions by tag',
+      filterStatus: 'Filter: {label}',
+      filterClear: 'Clear filter',
+      filterEmpty: 'No sessions tagged “{label}” in the current list',
     }
 
     const CSS = `
@@ -106,8 +112,12 @@ window.__ModuleLoader__.load({
 .dsh-tag-filter::-webkit-scrollbar{display:none}
 .dsh-tag-filterAll{height:22px;padding:0 9px;border:1px solid var(--dsw-alias-border-l4,rgba(127,127,127,.28));border-radius:999px;background:transparent;color:var(--dsw-alias-label-tertiary,#888);font:inherit;font-size:12px;line-height:1;cursor:pointer;flex:none;white-space:nowrap}
 .dsh-tag-filterAll.is-active{color:var(--dsw-alias-label-primary,#111);border-color:var(--dsw-alias-label-caption,#999);background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.12))}
-.dsh-tag-filterBlock{width:18px;height:18px;padding:0;border:2px solid transparent;border-radius:6px;flex:none;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
-.dsh-tag-filterBlock.is-active{border-color:var(--dsw-alias-label-primary,#111)}
+.dsh-tag-filterBlock{position:relative;width:20px;height:20px;padding:0;border:2px solid transparent;border-radius:6px;flex:none;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.dsh-tag-filterBlock.is-active{border-color:var(--dsw-alias-label-primary,#111);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 0 0 1px var(--dsw-alias-label-primary,#111)}
+.dsh-tag-filterBlock.is-active::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;line-height:1;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.dsh-tag-filterStatus{height:22px;padding:0 2px;border:0;background:transparent;color:var(--dsw-alias-label-tertiary,#888);font:inherit;font-size:12px;line-height:1;cursor:pointer;flex:none;white-space:nowrap}
+.dsh-tag-filterStatus:hover{color:var(--dsw-alias-label-primary,#111)}
+.dsh-tag-filterEmpty{padding:2px var(--dsh-sidebar-row-padding,8px) 8px;font-size:12px;line-height:17px;color:var(--dsw-alias-label-tertiary,#888)}
 [data-dsh-tag-hidden]{display:none!important}
 `
 
@@ -242,8 +252,10 @@ window.__ModuleLoader__.load({
         const FILTER_KEY = 'dsh.tag.filter.v1'
         let filterTagId = readFilter()
         let filterBar = null
+        let filterEmpty = null
         let filterObserver = null
         let filterTimer = 0
+        let filterSignature = ''
 
         function readFilter() {
           try {
@@ -261,6 +273,12 @@ window.__ModuleLoader__.load({
             // Blocked storage only loses persistence; the filter still applies.
           }
         }
+        function clearFilter() {
+          filterTagId = null
+          writeFilter()
+          renderFilter()
+          applyFilter()
+        }
         function ensureFilterBar() {
           if (filterBar !== null) return filterBar
           filterBar = document.createElement('div')
@@ -269,31 +287,44 @@ window.__ModuleLoader__.load({
           filterBar.setAttribute('aria-label', t('filterTitle'))
           return filterBar
         }
+        function ensureFilterEmpty() {
+          if (filterEmpty !== null) return filterEmpty
+          filterEmpty = document.createElement('div')
+          filterEmpty.className = 'dsh-tag-filterEmpty'
+          filterEmpty.hidden = true
+          return filterEmpty
+        }
         /** Rebuild the colour blocks only when the tag list or the selection changed. */
         function renderFilter() {
           if (filterBar === null) return
           const tags = state.tags
           filterBar.hidden = tags.length === 0
           if (tags.length === 0) {
-            filterBar.replaceChildren()
+            if (filterSignature !== '') {
+              filterSignature = ''
+              filterBar.replaceChildren()
+            }
+            if (filterEmpty !== null) filterEmpty.hidden = true
             return
           }
           if (filterTagId !== null && !tags.some(tag => tag.id === filterTagId)) {
             filterTagId = null
             writeFilter()
           }
+          // The MutationObserver re-mounts the bar after React updates. Rebuilding
+          // the buttons on every pass would replace the node between a real
+          // pointerdown and click, so the click would be lost.
+          const signature = JSON.stringify([filterTagId, tags.map(tag => [tag.id, tag.label, tag.color, tag.order])])
+          if (signature === filterSignature) return
+          filterSignature = signature
+          const activeTag = filterTagId === null ? undefined : tags.find(tag => tag.id === filterTagId)
           const all = document.createElement('button')
           all.type = 'button'
           all.className = 'dsh-tag-filterAll' + (filterTagId === null ? ' is-active' : '')
           all.textContent = t('filterAll')
           all.title = t('filterAll')
           all.setAttribute('aria-pressed', String(filterTagId === null))
-          all.addEventListener('click', () => {
-            filterTagId = null
-            writeFilter()
-            renderFilter()
-            applyFilter()
-          })
+          all.addEventListener('click', clearFilter)
           const blocks = tags.map(tag => {
             const block = document.createElement('button')
             block.type = 'button'
@@ -303,14 +334,29 @@ window.__ModuleLoader__.load({
             block.setAttribute('aria-label', tag.label)
             block.setAttribute('aria-pressed', String(filterTagId === tag.id))
             block.addEventListener('click', () => {
-              filterTagId = filterTagId === tag.id ? null : tag.id
-              writeFilter()
-              renderFilter()
-              applyFilter()
+              if (filterTagId === tag.id) clearFilter()
+              else {
+                filterTagId = tag.id
+                writeFilter()
+                renderFilter()
+                applyFilter()
+              }
             })
             return block
           })
-          filterBar.replaceChildren(all, ...blocks)
+          const status = activeTag === undefined
+            ? null
+            : (() => {
+              const button = document.createElement('button')
+              button.type = 'button'
+              button.className = 'dsh-tag-filterStatus'
+              button.textContent = t('filterStatus', { label: activeTag.label })
+              button.title = t('filterClear')
+              button.setAttribute('aria-label', t('filterClear'))
+              button.addEventListener('click', clearFilter)
+              return button
+            })()
+          filterBar.replaceChildren(all, ...blocks, ...(status === null ? [] : [status]))
         }
         /** The session list's scroll container and the node to insert the bar before. */
         function filterAnchor() {
@@ -333,19 +379,34 @@ window.__ModuleLoader__.load({
           if (place === null) return false
           const bar = ensureFilterBar()
           if (bar.parentElement !== place.parent) place.parent.insertBefore(bar, place.before)
+          const empty = ensureFilterEmpty()
+          if (empty.parentElement !== place.parent) place.parent.insertBefore(empty, bar.nextSibling)
           renderFilter()
           return true
         }
         function applyFilter() {
-          const active = filterTagId !== null && state.tags.some(tag => tag.id === filterTagId)
+          const activeTag = filterTagId === null ? undefined : state.tags.find(tag => tag.id === filterTagId)
+          let matches = 0
           for (const row of document.querySelectorAll('[data-row-key^="session:"]')) {
-            if (!active) {
+            if (activeTag === undefined) {
               row.removeAttribute('data-dsh-tag-hidden')
               continue
             }
             const id = (row.getAttribute('data-row-key') || '').slice('session:'.length)
-            if (state.sessions[id] === filterTagId) row.removeAttribute('data-dsh-tag-hidden')
-            else row.setAttribute('data-dsh-tag-hidden', '')
+            if (state.sessions[id] === activeTag.id) {
+              row.removeAttribute('data-dsh-tag-hidden')
+              matches += 1
+            } else {
+              row.setAttribute('data-dsh-tag-hidden', '')
+            }
+          }
+          if (filterEmpty !== null) {
+            if (activeTag !== undefined && matches === 0) {
+              filterEmpty.textContent = t('filterEmpty', { label: activeTag.label })
+              filterEmpty.hidden = false
+            } else {
+              filterEmpty.hidden = true
+            }
           }
         }
         /** Collapse one burst of React mutations into one mount + filter pass. */
@@ -651,6 +712,10 @@ window.__ModuleLoader__.load({
             if (filterBar !== null) {
               filterBar.remove()
               filterBar = null
+            }
+            if (filterEmpty !== null) {
+              filterEmpty.remove()
+              filterEmpty = null
             }
             for (const row of document.querySelectorAll('[data-dsh-tag-hidden]')) {
               row.removeAttribute('data-dsh-tag-hidden')
