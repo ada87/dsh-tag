@@ -108,6 +108,7 @@ window.__ModuleLoader__.load({
 .dsh-tag-empty{padding:10px 0;font-size:13px;color:var(--dsw-alias-label-tertiary,#888)}
 .dsh-tag-hover{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;line-height:17px;color:#cfd3d6}
 .dsh-tag-hoverItem{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.dsh-tag-filterWrap{flex:none;box-sizing:border-box;width:100%}
 .dsh-tag-filter{display:flex;align-items:center;gap:6px;flex:none;box-sizing:border-box;width:100%;padding:2px var(--dsh-sidebar-row-padding,8px) 6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
 .dsh-tag-filter::-webkit-scrollbar{display:none}
 .dsh-tag-filterAll{height:22px;padding:0 9px;border:1px solid var(--dsw-alias-border-l4,rgba(127,127,127,.28));border-radius:999px;background:transparent;color:var(--dsw-alias-label-tertiary,#888);font:inherit;font-size:12px;line-height:1;cursor:pointer;flex:none;white-space:nowrap}
@@ -118,7 +119,6 @@ window.__ModuleLoader__.load({
 .dsh-tag-filterStatus{height:22px;padding:0 2px;border:0;background:transparent;color:var(--dsw-alias-label-tertiary,#888);font:inherit;font-size:12px;line-height:1;cursor:pointer;flex:none;white-space:nowrap}
 .dsh-tag-filterStatus:hover{color:var(--dsw-alias-label-primary,#111)}
 .dsh-tag-filterEmpty{padding:2px var(--dsh-sidebar-row-padding,8px) 8px;font-size:12px;line-height:17px;color:var(--dsw-alias-label-tertiary,#888)}
-[data-dsh-tag-hidden]{display:none!important}
 `
 
     /** Menu dot as an inline SVG so every tag carries its own color. */
@@ -162,6 +162,9 @@ window.__ModuleLoader__.load({
         const colorStyle = document.createElement('style')
         colorStyle.dataset.dshTagColor = ''
         document.head.append(colorStyle)
+        const filterStyle = document.createElement('style')
+        filterStyle.dataset.dshTagFilter = ''
+        document.head.append(filterStyle)
 
         // ── Data ───────────────────────────────────────────────────────────────
         let state = { tags: [], sessions: {}, workspaces: [], loaded: false, error: null }
@@ -251,6 +254,7 @@ window.__ModuleLoader__.load({
         // ── Filter bar ─────────────────────────────────────────────────────────
         const FILTER_KEY = 'dsh.tag.filter.v1'
         let filterTagId = readFilter()
+        let filterWrap = null
         let filterBar = null
         let filterEmpty = null
         let filterObserver = null
@@ -279,32 +283,42 @@ window.__ModuleLoader__.load({
           renderFilter()
           applyFilter()
         }
-        function ensureFilterBar() {
-          if (filterBar !== null) return filterBar
+        /** Our own writes are not React updates; pausing the observer avoids feedback loops. */
+        function withoutFilterObserver(task) {
+          if (filterObserver !== null) filterObserver.disconnect()
+          try {
+            return task()
+          } finally {
+            if (filterObserver !== null) {
+              filterObserver.observe(document.body, { childList: true, subtree: true })
+            }
+          }
+        }
+        function ensureFilterWrap() {
+          if (filterWrap !== null) return filterWrap
+          filterWrap = document.createElement('div')
+          filterWrap.className = 'dsh-tag-filterWrap'
           filterBar = document.createElement('div')
           filterBar.className = 'dsh-tag-filter'
           filterBar.setAttribute('role', 'toolbar')
           filterBar.setAttribute('aria-label', t('filterTitle'))
-          return filterBar
-        }
-        function ensureFilterEmpty() {
-          if (filterEmpty !== null) return filterEmpty
           filterEmpty = document.createElement('div')
           filterEmpty.className = 'dsh-tag-filterEmpty'
           filterEmpty.hidden = true
-          return filterEmpty
+          filterWrap.append(filterBar, filterEmpty)
+          return filterWrap
         }
         /** Rebuild the colour blocks only when the tag list or the selection changed. */
         function renderFilter() {
-          if (filterBar === null) return
+          if (filterWrap === null) return
           const tags = state.tags
-          filterBar.hidden = tags.length === 0
+          filterWrap.hidden = tags.length === 0
           if (tags.length === 0) {
             if (filterSignature !== '') {
               filterSignature = ''
-              filterBar.replaceChildren()
+              withoutFilterObserver(() => filterBar.replaceChildren())
             }
-            if (filterEmpty !== null) filterEmpty.hidden = true
+            filterEmpty.hidden = true
             return
           }
           if (filterTagId !== null && !tags.some(tag => tag.id === filterTagId)) {
@@ -356,7 +370,7 @@ window.__ModuleLoader__.load({
               button.addEventListener('click', clearFilter)
               return button
             })()
-          filterBar.replaceChildren(all, ...blocks, ...(status === null ? [] : [status]))
+          withoutFilterObserver(() => filterBar.replaceChildren(all, ...blocks, ...(status === null ? [] : [status])))
         }
         /** The session list's scroll container and the node to insert the bar before. */
         function filterAnchor() {
@@ -377,34 +391,40 @@ window.__ModuleLoader__.load({
         function mountFilter() {
           const place = filterAnchor()
           if (place === null) return false
-          const bar = ensureFilterBar()
-          if (bar.parentElement !== place.parent) place.parent.insertBefore(bar, place.before)
-          const empty = ensureFilterEmpty()
-          if (empty.parentElement !== place.parent) place.parent.insertBefore(empty, bar.nextSibling)
+          const wrap = ensureFilterWrap()
+          if (wrap.parentElement !== place.parent) {
+            withoutFilterObserver(() => place.parent.insertBefore(wrap, place.before))
+          }
           renderFilter()
           return true
         }
+        /**
+         * Filtering is pure CSS: one rule hides every session row, later rules
+         * re-show the matching ids. No per-row attributes means no DOM churn
+         * while React renders or the user expands a workspace.
+         */
         function applyFilter() {
           const activeTag = filterTagId === null ? undefined : state.tags.find(tag => tag.id === filterTagId)
           let matches = 0
-          for (const row of document.querySelectorAll('[data-row-key^="session:"]')) {
-            if (activeTag === undefined) {
-              row.removeAttribute('data-dsh-tag-hidden')
-              continue
-            }
-            const id = (row.getAttribute('data-row-key') || '').slice('session:'.length)
-            if (state.sessions[id] === activeTag.id) {
-              row.removeAttribute('data-dsh-tag-hidden')
+          if (activeTag !== undefined) {
+            const rules = ['[data-row-key^="session:"]{display:none!important}']
+            for (const row of document.querySelectorAll('[data-row-key^="session:"]')) {
+              const id = (row.getAttribute('data-row-key') || '').slice('session:'.length)
+              if (state.sessions[id] !== activeTag.id) continue
               matches += 1
-            } else {
-              row.setAttribute('data-dsh-tag-hidden', '')
+              const safe = id.replace(/["\\\r\n]/g, '')
+              rules.push(`[data-row-key="session:${safe}"]{display:flex!important}`)
             }
+            filterStyle.textContent = rules.join('\n')
+          } else {
+            filterStyle.textContent = ''
           }
           if (filterEmpty !== null) {
             if (activeTag !== undefined && matches === 0) {
-              filterEmpty.textContent = t('filterEmpty', { label: activeTag.label })
-              filterEmpty.hidden = false
-            } else {
+              const text = t('filterEmpty', { label: activeTag.label })
+              if (filterEmpty.textContent !== text) filterEmpty.textContent = text
+              if (filterEmpty.hidden) filterEmpty.hidden = false
+            } else if (!filterEmpty.hidden) {
               filterEmpty.hidden = true
             }
           }
@@ -709,17 +729,13 @@ window.__ModuleLoader__.load({
               window.clearTimeout(filterTimer)
               filterTimer = 0
             }
-            if (filterBar !== null) {
-              filterBar.remove()
+            if (filterWrap !== null) {
+              filterWrap.remove()
+              filterWrap = null
               filterBar = null
-            }
-            if (filterEmpty !== null) {
-              filterEmpty.remove()
               filterEmpty = null
             }
-            for (const row of document.querySelectorAll('[data-dsh-tag-hidden]')) {
-              row.removeAttribute('data-dsh-tag-hidden')
-            }
+            filterStyle.textContent = ''
             if (source !== undefined) {
               source.close()
               source = undefined
@@ -771,6 +787,7 @@ window.__ModuleLoader__.load({
         ctx.effect(() => () => {
           baseStyle.remove()
           colorStyle.remove()
+          filterStyle.remove()
         }, 'dsh-tag: styles')
       },
     }
