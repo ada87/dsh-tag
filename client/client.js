@@ -16,6 +16,7 @@ window.__ModuleLoader__.load({
   id: 'dsh-tag',
   factory(require) {
     const React = require('react')
+    const { Switch } = require('@deepseek-ai/dsh-client-ui-primitives')
     const h = React.createElement
 
     const NS = 'dshTag'
@@ -75,6 +76,19 @@ window.__ModuleLoader__.load({
       filterTitle: '按标签过滤会话',
       filterEmpty: '没有带「{label}」标签的会话',
       filterWorkspaceEmpty: '「{label}」标在工作区上；这个工作区下暂无会话',
+      showFilter: '显示过滤条',
+      showFilterDesc: '在工作区列表上方显示标签颜色过滤条。',
+      showFilterFailed: '过滤条设置没有保存',
+      colorGreen: '绿色',
+      colorAmber: '橙色',
+      colorBlue: '蓝色',
+      colorRed: '红色',
+      colorPurple: '紫色',
+      colorGray: '灰色',
+      colorTeal: '青色',
+      colorPink: '粉色',
+      colorIndigo: '靛蓝',
+      colorBrown: '棕色',
     }
 
     const en = {
@@ -98,6 +112,235 @@ window.__ModuleLoader__.load({
       filterTitle: 'Filter sessions by tag',
       filterEmpty: 'No sessions tagged “{label}”',
       filterWorkspaceEmpty: '“{label}” is on a workspace; it holds no sessions yet',
+      showFilter: 'Show filter bar',
+      showFilterDesc: 'Show the tag colour filters above the workspace list.',
+      showFilterFailed: 'The filter bar setting was not saved',
+      colorGreen: 'Green',
+      colorAmber: 'Amber',
+      colorBlue: 'Blue',
+      colorRed: 'Red',
+      colorPurple: 'Purple',
+      colorGray: 'Gray',
+      colorTeal: 'Teal',
+      colorPink: 'Pink',
+      colorIndigo: 'Indigo',
+      colorBrown: 'Brown',
+    }
+
+    const ja = {
+      nav: 'タグ',
+      menuSession: 'タグ',
+      menuWorkspace: 'ワークスペースのタグ',
+      clear: 'タグを解除',
+      noTags: 'タグがまだありません。「設定 → タグ」で作成できます',
+      newPlaceholder: '新しいタグ名…',
+      add: '追加',
+      remove: '削除',
+      confirmDelete: '「{label}」を削除しますか？付いているタグもすべて解除されます。',
+      settingsTitle: 'タグ',
+      empty: 'タグがまだありません。下から作成してください。',
+      failed: 'タグを更新できませんでした',
+      limit: 'タグは最大 10 個までです',
+      noColors: '使える色がなくなりました',
+      cycleColor: '色を変える',
+      color: '色',
+      filterAll: 'すべて',
+      filterTitle: 'タグでセッションを絞り込む',
+      filterEmpty: '「{label}」の付いたセッションはありません',
+      filterWorkspaceEmpty: '「{label}」はこのワークスペースに付いていますが、セッションはまだありません',
+      showFilter: 'フィルターバーを表示',
+      showFilterDesc: 'ワークスペース一覧の上にタグの色フィルターを表示します。',
+      showFilterFailed: 'フィルター設定を保存できませんでした',
+      colorGreen: '緑',
+      colorAmber: 'オレンジ',
+      colorBlue: '青',
+      colorRed: '赤',
+      colorPurple: '紫',
+      colorGray: 'グレー',
+      colorTeal: '青緑',
+      colorPink: 'ピンク',
+      colorIndigo: '藍色',
+      colorBrown: '茶色',
+    }
+
+    const es = {
+      nav: 'Etiquetas',
+      menuSession: 'Etiquetas',
+      menuWorkspace: 'Etiquetas del espacio de trabajo',
+      clear: 'Quitar etiqueta',
+      noTags: 'Aún no hay etiquetas; créala en Ajustes → Etiquetas',
+      newPlaceholder: 'Nombre de la nueva etiqueta…',
+      add: 'Añadir',
+      remove: 'Eliminar',
+      confirmDelete: '¿Eliminar «{label}»? También se quitará de todo lo que la use.',
+      settingsTitle: 'Etiquetas',
+      empty: 'Aún no hay etiquetas; crea una abajo.',
+      failed: 'No se pudo actualizar la etiqueta',
+      limit: 'Se admiten 10 etiquetas como máximo',
+      noColors: 'No quedan colores disponibles',
+      cycleColor: 'Cambiar color',
+      color: 'Color',
+      filterAll: 'Todas',
+      filterTitle: 'Filtrar sesiones por etiqueta',
+      filterEmpty: 'Ninguna sesión tiene «{label}»',
+      filterWorkspaceEmpty: '«{label}» está en este espacio de trabajo, pero aún no tiene sesiones',
+      showFilter: 'Mostrar barra de filtros',
+      showFilterDesc: 'Muestra los filtros de color sobre la lista de espacios de trabajo.',
+      showFilterFailed: 'No se pudo guardar el ajuste de la barra de filtros',
+      colorGreen: 'Verde',
+      colorAmber: 'Ámbar',
+      colorBlue: 'Azul',
+      colorRed: 'Rojo',
+      colorPurple: 'Morado',
+      colorGray: 'Gris',
+      colorTeal: 'Turquesa',
+      colorPink: 'Rosa',
+      colorIndigo: 'Índigo',
+      colorBrown: 'Marrón',
+    }
+
+    const fr = {
+      nav: 'Étiquettes',
+      menuSession: 'Étiquettes',
+      menuWorkspace: 'Étiquettes de l’espace de travail',
+      clear: 'Retirer l’étiquette',
+      noTags: 'Pas encore d’étiquette — créez-en une dans Réglages → Étiquettes',
+      newPlaceholder: 'Nom de la nouvelle étiquette…',
+      add: 'Ajouter',
+      remove: 'Supprimer',
+      confirmDelete: 'Supprimer « {label} » ? Elle sera aussi retirée partout où elle est utilisée.',
+      settingsTitle: 'Étiquettes',
+      empty: 'Aucune étiquette pour l’instant — créez-en une ci-dessous.',
+      failed: 'Impossible de mettre à jour l’étiquette',
+      limit: '10 étiquettes maximum',
+      noColors: 'Plus aucune couleur disponible',
+      cycleColor: 'Changer la couleur',
+      color: 'Couleur',
+      filterAll: 'Toutes',
+      filterTitle: 'Filtrer les sessions par étiquette',
+      filterEmpty: 'Aucune session étiquetée « {label} »',
+      filterWorkspaceEmpty: '« {label} » est sur cet espace de travail, mais il ne contient encore aucune session',
+      showFilter: 'Afficher la barre de filtres',
+      showFilterDesc: 'Affiche les filtres de couleur au-dessus de la liste des espaces de travail.',
+      showFilterFailed: 'Le réglage de la barre de filtres n’a pas été enregistré',
+      colorGreen: 'Vert',
+      colorAmber: 'Ambre',
+      colorBlue: 'Bleu',
+      colorRed: 'Rouge',
+      colorPurple: 'Violet',
+      colorGray: 'Gris',
+      colorTeal: 'Turquoise',
+      colorPink: 'Rose',
+      colorIndigo: 'Indigo',
+      colorBrown: 'Brun',
+    }
+
+    const de = {
+      nav: 'Tags',
+      menuSession: 'Tags',
+      menuWorkspace: 'Workspace-Tags',
+      clear: 'Tag entfernen',
+      noTags: 'Noch keine Tags – lege sie unter Einstellungen → Tags an',
+      newPlaceholder: 'Name des neuen Tags…',
+      add: 'Hinzufügen',
+      remove: 'Löschen',
+      confirmDelete: '„{label}“ löschen? Der Tag wird überall entfernt, wo er gesetzt ist.',
+      settingsTitle: 'Tags',
+      empty: 'Noch keine Tags – lege unten einen an.',
+      failed: 'Tag konnte nicht aktualisiert werden',
+      limit: 'Höchstens 10 Tags',
+      noColors: 'Keine Farben mehr frei',
+      cycleColor: 'Farbe ändern',
+      color: 'Farbe',
+      filterAll: 'Alle',
+      filterTitle: 'Sitzungen nach Tag filtern',
+      filterEmpty: 'Keine Sitzung mit dem Tag „{label}“',
+      filterWorkspaceEmpty: '„{label}“ liegt auf diesem Workspace, der noch keine Sitzungen enthält',
+      showFilter: 'Filterleiste anzeigen',
+      showFilterDesc: 'Zeigt die Tag-Farbfilter über der Workspace-Liste.',
+      showFilterFailed: 'Die Filterleisten-Einstellung wurde nicht gespeichert',
+      colorGreen: 'Grün',
+      colorAmber: 'Orange',
+      colorBlue: 'Blau',
+      colorRed: 'Rot',
+      colorPurple: 'Violett',
+      colorGray: 'Grau',
+      colorTeal: 'Türkis',
+      colorPink: 'Rosa',
+      colorIndigo: 'Indigo',
+      colorBrown: 'Braun',
+    }
+
+    const ru = {
+      nav: 'Метки',
+      menuSession: 'Метки',
+      menuWorkspace: 'Метки рабочего пространства',
+      clear: 'Снять метку',
+      noTags: 'Меток пока нет — создайте в «Настройки → Метки»',
+      newPlaceholder: 'Название новой метки…',
+      add: 'Добавить',
+      remove: 'Удалить',
+      confirmDelete: 'Удалить метку «{label}»? Она также снимется со всех элементов.',
+      settingsTitle: 'Метки',
+      empty: 'Меток пока нет — создайте ниже.',
+      failed: 'Не удалось обновить метку',
+      limit: 'Не более 10 меток',
+      noColors: 'Свободных цветов не осталось',
+      cycleColor: 'Сменить цвет',
+      color: 'Цвет',
+      filterAll: 'Все',
+      filterTitle: 'Фильтровать сессии по метке',
+      filterEmpty: 'Нет сессий с меткой «{label}»',
+      filterWorkspaceEmpty: 'На этом рабочем пространстве стоит «{label}», но сессий пока нет',
+      showFilter: 'Показывать панель фильтров',
+      showFilterDesc: 'Показывает цветные фильтры меток над списком рабочих пространств.',
+      showFilterFailed: 'Настройка панели фильтров не сохранилась',
+      colorGreen: 'Зелёный',
+      colorAmber: 'Янтарный',
+      colorBlue: 'Синий',
+      colorRed: 'Красный',
+      colorPurple: 'Фиолетовый',
+      colorGray: 'Серый',
+      colorTeal: 'Бирюзовый',
+      colorPink: 'Розовый',
+      colorIndigo: 'Индиго',
+      colorBrown: 'Коричневый',
+    }
+
+    const pt = {
+      nav: 'Etiquetas',
+      menuSession: 'Etiquetas',
+      menuWorkspace: 'Etiquetas do espaço de trabalho',
+      clear: 'Remover etiqueta',
+      noTags: 'Ainda não há etiquetas — crie em Configurações → Etiquetas',
+      newPlaceholder: 'Nome da nova etiqueta…',
+      add: 'Adicionar',
+      remove: 'Excluir',
+      confirmDelete: 'Excluir “{label}”? Ela também será removida de tudo o que a usa.',
+      settingsTitle: 'Etiquetas',
+      empty: 'Ainda sem etiquetas — crie uma abaixo.',
+      failed: 'Não foi possível atualizar a etiqueta',
+      limit: 'No máximo 10 etiquetas',
+      noColors: 'Não há mais cores disponíveis',
+      cycleColor: 'Mudar cor',
+      color: 'Cor',
+      filterAll: 'Todas',
+      filterTitle: 'Filtrar sessões por etiqueta',
+      filterEmpty: 'Nenhuma sessão com “{label}”',
+      filterWorkspaceEmpty: '“{label}” está neste espaço de trabalho, que ainda não tem sessões',
+      showFilter: 'Mostrar barra de filtros',
+      showFilterDesc: 'Mostra os filtros de cor acima da lista de espaços de trabalho.',
+      showFilterFailed: 'A configuração da barra de filtros não foi salva',
+      colorGreen: 'Verde',
+      colorAmber: 'Âmbar',
+      colorBlue: 'Azul',
+      colorRed: 'Vermelho',
+      colorPurple: 'Roxo',
+      colorGray: 'Cinza',
+      colorTeal: 'Turquesa',
+      colorPink: 'Rosa',
+      colorIndigo: 'Índigo',
+      colorBrown: 'Marrom',
     }
 
     const CSS = `
@@ -162,7 +405,12 @@ body[data-ds-dark-theme]{
 .dsh-tag-settings{display:flex;flex-direction:column;gap:14px;width:100%}
 .dsh-tag-settingsHead{display:flex;flex-direction:column;gap:4px}
 .dsh-tag-settingsTitle{margin:0;font-size:16px;line-height:24px;font-weight:500;color:var(--dsw-alias-label-primary,#111)}
-.dsh-tag-settingsList{display:flex;flex-direction:column;gap:8px;margin-top:12px;padding:0;border-radius:0;background:transparent}
+.dsh-tag-switchRow{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:2px 0 14px;border-bottom:1px solid var(--dsw-alias-border-l2,rgba(127,127,127,.16))}
+.dsh-tag-switchText{min-width:0;display:flex;flex-direction:column;gap:2px}
+.dsh-tag-switchTitle{font-size:14px;line-height:20px;color:var(--dsw-alias-label-primary,#111)}
+.dsh-tag-switchDesc{font-size:12px;line-height:18px;color:var(--dsw-alias-label-secondary,var(--dsw-alias-label-tertiary,#888))}
+.dsh-tag-switchRow .dsh-tag-error{margin:2px 0 0}
+.dsh-tag-settingsList{display:flex;flex-direction:column;gap:8px;margin-top:2px;padding:0;border-radius:0;background:transparent}
 .dsh-tag-rowWrap{box-sizing:border-box;display:flex;flex-direction:column;width:100%;padding:0 14px;border:1px solid var(--dsh-tag-frame,var(--dsw-alias-settings-card-stroke,rgba(127,127,127,.24)));border-radius:12px;background:var(--dsw-alias-settings-card-fill,transparent)}
 .dsh-tag-row{display:flex;align-items:center;gap:10px;min-height:44px;padding:2px 0;border-bottom:0}
 .dsh-tag-row .dsh-tag-input{flex:1;min-width:0;height:32px;padding:0 8px;border:0;border-radius:6px;background:transparent;outline:none}
@@ -187,8 +435,7 @@ body[data-ds-dark-theme]{
 .dsh-tag-filterEmpty{padding:2px var(--dsh-sidebar-row-padding,8px) 8px;font-size:12px;line-height:17px;color:var(--dsw-alias-label-tertiary,#888)}
 `
 
-    /** Menu dot as an inline SVG so every tag carries its own color. */
-    /** Hex from the palette, with alpha for a neutral card outline. */
+    /** Hex from the palette, with alpha for the card outline. */
     function tint(hex, alpha) {
       const match = /^#([0-9a-f]{6})$/i.exec(hex)
       if (match === null) return hex
@@ -230,7 +477,10 @@ body[data-ds-dark-theme]{
     return {
       inject: ['slots', 'locale', 'contextMenus'],
       apply(ctx) {
-        ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'dsh-tag: copy')
+        ctx.effect(
+          () => ctx.locale.register(NS, { en, zh, ja, es, fr, de, ru, pt }),
+          'dsh-tag: copy',
+        )
         const t = ctx.locale.bind(NS)
 
         const baseStyle = document.createElement('style')
@@ -245,7 +495,14 @@ body[data-ds-dark-theme]{
         document.head.append(filterStyle)
 
         // ── Data ───────────────────────────────────────────────────────────────
-        let state = { tags: [], sessions: {}, workspaces: [], loaded: false, error: null }
+        let state = {
+          settings: { showFilter: true },
+          tags: [],
+          sessions: {},
+          workspaces: [],
+          loaded: false,
+          error: null,
+        }
         const listeners = new Set()
         function emit() {
           for (const listener of [...listeners]) listener()
@@ -268,6 +525,12 @@ body[data-ds-dark-theme]{
         }
         function textColor(color) {
           return PALETTE[color] || (/^#[0-9a-f]{6}$/i.test(color) ? color : PALETTE.gray)
+        }
+        /** Localized palette name; unknown colors keep their stored id. */
+        function colorName(name) {
+          const key = `color${String(name).charAt(0).toUpperCase()}${String(name).slice(1)}`
+          const text = t(key)
+          return typeof text === 'string' && text.length > 0 && text !== key ? text : name
         }
         function colorOfTag(tagId) {
           const tag = state.tags.find(item => item.id === tagId)
@@ -308,6 +571,10 @@ body[data-ds-dark-theme]{
         }
 
         function normalize(data) {
+          const settings = {
+            // An older host has no settings field; keep the bar visible.
+            showFilter: !(data && data.settings && data.settings.showFilter === false),
+          }
           const tags = Array.isArray(data && data.tags) ? data.tags : []
           const sessions = {}
           if (data && data.sessions && typeof data.sessions === 'object') {
@@ -326,7 +593,7 @@ body[data-ds-dark-theme]{
               }
             })
             .filter(item => item.id.length > 0 && typeof item.tagId === 'string' && item.tagId.length > 0)
-          return { tags, sessions, workspaces }
+          return { settings, tags, sessions, workspaces }
         }
 
         // ── Filter bar ─────────────────────────────────────────────────────────
@@ -425,6 +692,22 @@ body[data-ds-dark-theme]{
         /** Rebuild the colour blocks only when the tag list or the selection changed. */
         function renderFilter() {
           if (filterWrap === null) return
+          if (!state.settings.showFilter) {
+            // A hidden bar must not keep filtering: drop the selection and the
+            // CSS rules it generated, otherwise rows stay hidden with no way
+            // back to the full list.
+            if (filterTagId !== null || autoExpanded.size > 0 || autoRevealed.size > 0) {
+              restoreExpanded()
+              userCollapsed.clear()
+              filterTagId = null
+              writeFilter()
+              filterSignature = ''
+              filterStyle.textContent = ''
+            }
+            filterWrap.hidden = true
+            if (filterEmpty !== null) filterEmpty.hidden = true
+            return
+          }
           const tags = state.tags
           filterWrap.hidden = tags.length === 0
           if (tags.length === 0) {
@@ -927,8 +1210,8 @@ body[data-ds-dark-theme]{
                 type: 'button',
                 className: 'dsh-tag-swatch' + (value === name ? ' is-current' : ''),
                 style: { backgroundColor: swatch(name) },
-                'aria-label': name,
-                title: name,
+                'aria-label': colorName(name),
+                title: colorName(name),
                 onClick: () => {
                   setOpen(false)
                   onChange(name)
@@ -1034,6 +1317,8 @@ body[data-ds-dark-theme]{
           const [color, setColor] = React.useState('green')
           const [busy, setBusy] = React.useState(false)
           const [error, setError] = React.useState(null)
+          const [settingsBusy, setSettingsBusy] = React.useState(false)
+          const [settingsError, setSettingsError] = React.useState(false)
           const usedColors = new Set(snapshot.tags.map(tag => tag.color))
           const availableColors = SWATCHES.filter(name => !usedColors.has(name))
           const atLimit = snapshot.tags.length >= 10
@@ -1046,6 +1331,14 @@ body[data-ds-dark-theme]{
           React.useEffect(() => {
             if (!availableColors.includes(color)) setColor(availableColors[0] ?? '')
           }, [snapshot.tags, color])
+
+          const toggleFilter = (next) => {
+            setSettingsBusy(true)
+            setSettingsError(false)
+            void request('PATCH', '/settings', { showFilter: next })
+              .catch(() => setSettingsError(true))
+              .finally(() => setSettingsBusy(false))
+          }
 
           const create = () => {
             const text = label.trim()
@@ -1061,6 +1354,19 @@ body[data-ds-dark-theme]{
           return h('section', { className: 'dsh-tag-settings' },
             h('header', { className: 'dsh-tag-settingsHead' },
               h('h2', { className: 'dsh-tag-settingsTitle' }, t('settingsTitle'))),
+            h('div', { className: 'dsh-tag-switchRow' },
+              h('div', { className: 'dsh-tag-switchText' },
+                h('div', { className: 'dsh-tag-switchTitle' }, t('showFilter')),
+                h('div', { className: 'dsh-tag-switchDesc' }, t('showFilterDesc')),
+                settingsError
+                  ? h('div', { className: 'dsh-tag-error', role: 'alert' }, t('showFilterFailed'))
+                  : null),
+              h(Switch, {
+                checked: snapshot.settings.showFilter,
+                disabled: settingsBusy,
+                label: t('showFilter'),
+                onChange: toggleFilter,
+              })),
             error === null ? null : h('p', { className: 'dsh-tag-error' }, error),
             snapshot.error === null ? null : h('p', { className: 'dsh-tag-error' }, snapshot.error),
             snapshot.tags.length === 0

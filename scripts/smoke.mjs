@@ -97,6 +97,22 @@ try {
     assert.deepEqual(response.json.tags.map(tag => tag.id), ['design', 'code', 'ops', 'temp'])
     assert.deepEqual(response.json.sessions, {})
     assert.deepEqual(response.json.workspaces, [])
+    assert.equal(response.json.version, 2)
+    assert.deepEqual(response.json.settings, { showFilter: true }, 'the filter bar is on by default')
+  }
+
+  {
+    const response = await call(route, 'PATCH', '/tags/settings', { showFilter: false })
+    assert.equal(response.status, 200)
+    assert.equal(response.json.snapshot.settings.showFilter, false)
+    const reread = await call(route, 'GET', '/tags')
+    assert.equal(reread.json.settings.showFilter, false, 'the setting survives a fresh read')
+  }
+
+  {
+    const response = await call(route, 'PATCH', '/tags/settings', { showFilter: 'no' })
+    assert.equal(response.status, 400, 'showFilter must be a boolean')
+    assert.equal(response.json.error.code, 'bad-settings')
   }
 
   let created
@@ -184,6 +200,7 @@ try {
     assert.equal(state.tags.length, 4, 'state file persisted')
     assert.equal(state.workspaces.ws1.tagId, 'code')
     assert.equal(state.sessions.s1, undefined)
+    assert.equal(state.settings.showFilter, false, 'settings persist with the state')
   }
 
   console.log('dsh-tag host smoke: ok')

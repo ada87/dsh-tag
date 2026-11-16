@@ -120,6 +120,15 @@ function createHandler(
         respondWithState(res, store, hub, 201, { tag })
         return
       }
+      if (method === 'PATCH' && segments.length === 1 && segments[0] === 'settings') {
+        assertTrusted(ctx, req)
+        const body = ((await readJson(req)) ?? {}) as { showFilter?: unknown }
+        const settings = store.updateSettings({
+          ...(body.showFilter === undefined ? {} : { showFilter: body.showFilter }),
+        })
+        respondWithState(res, store, hub, 200, { settings })
+        return
+      }
       if ((method === 'PATCH' || method === 'DELETE') && segments.length === 1) {
         assertTrusted(ctx, req)
         const id = segments[0]!

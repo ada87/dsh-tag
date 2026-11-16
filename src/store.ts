@@ -2,28 +2,45 @@ import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from '
 import { dirname } from 'node:path'
 import { HttpError } from './errors.js'
 import {
+  DEFAULT_SETTINGS,
   PROTOCOL_VERSION,
   type Snapshot,
   type Tag,
   type TagPatch,
+  type TagSettings,
   type WorkspaceTag,
 } from './protocol.js'
 
-const RESERVED_IDS = new Set(['events', 'health', 'sessions', 'workspaces'])
+const RESERVED_IDS = new Set(['events', 'health', 'sessions', 'settings', 'workspaces'])
 const NAMED_COLORS = new Set([
   'green', 'amber', 'blue', 'red', 'purple',
   'gray', 'teal', 'pink', 'indigo', 'brown',
 ])
 const MAX_TAGS = 10
-const STATE_VERSION = 1
+const STATE_VERSION = 2
 
-/** Business-oriented defaults; IDs stay stable so assignments survive renames. */
-const DEFAULT_TAGS: ReadonlyArray<readonly [id: string, label: string, color: string]> = [
-  ['design', '设计', 'purple'],
-  ['code', '编码', 'blue'],
-  ['ops', '运营', 'green'],
-  ['temp', '临时', 'gray'],
+/**
+ * Business-oriented defaults; IDs stay stable so assignments survive renames.
+ * Only the labels follow the host language, and only when the state file is
+ * first created — they are ordinary tags the user can rename afterwards.
+ */
+const DEFAULT_TAG_DEFS: ReadonlyArray<readonly [id: string, color: string]> = [
+  ['design', 'purple'],
+  ['code', 'blue'],
+  ['ops', 'green'],
+  ['temp', 'gray'],
 ]
+
+const DEFAULT_LABELS: Record<string, Record<string, string>> = {
+  en: { design: 'Design', code: 'Code', ops: 'Ops', temp: 'Temp' },
+  zh: { design: '设计', code: '编码', ops: '运营', temp: '临时' },
+  ja: { design: 'デザイン', code: 'コード', ops: '運用', temp: '一時的' },
+  es: { design: 'Diseño', code: 'Código', ops: 'Operaciones', temp: 'Temporal' },
+  fr: { design: 'Design', code: 'Code', ops: 'Ops', temp: 'Temporaire' },
+  de: { design: 'Design', code: 'Code', ops: 'Betrieb', temp: 'Temporär' },
+  ru: { design: 'Дизайн', code: 'Код', ops: 'Эксплуатация', temp: 'Временное' },
+  pt: { design: 'Design', code: 'Código', ops: 'Operações', temp: 'Temporário' },
+}
 
 interface PersistedTag {
   id: string
@@ -40,6 +57,7 @@ interface PersistedWorkspace {
 
 interface PersistedState {
   version: number
+  settings: TagSettings
   tags: PersistedTag[]
   sessions: Record<string, string>
   workspaces: Record<string, PersistedWorkspace>
@@ -51,6 +69,7 @@ export interface TagStore {
   updateTag(id: string, patch: TagPatch): Tag
   deleteTag(id: string): void
   assign(kind: 'session' | 'workspace', targetId: string, tagId: string | null, path?: string): void
+  updateSettings(patch: { showFilter?: unknown }): TagSettings
   close(): void
 }
 
@@ -103,7 +122,14 @@ export function openTagStore(
       workspaces.push({ id, ...(path === undefined || path.length === 0 ? {} : { path }), tagId: assignment.tagId })
     }
     workspaces.sort((left, right) => left.id.localeCompare(right.id))
-    return { version: PROTOCOL_VERSION, updatedAt: Date.now(), tags: list, sessions, workspaces }
+    return {
+      version: PROTOCOL_VERSION,
+      updatedAt: Date.now(),
+      settings: { ...state.settings },
+      tags: list,
+      sessions,
+      workspaces,
+    }
   }
 
   const createTag = (rawLabel: unknown, rawColor: unknown): Tag => {
@@ -189,12 +215,25 @@ export function openTagStore(
     save({ ...state, workspaces })
   }
 
+  const updateSettings = (patch: { showFilter?: unknown }): TagSettings => {
+    const next: TagSettings = { ...state.settings }
+    if (patch.showFilter !== undefined) {
+      if (typeof patch.showFilter !== 'boolean') {
+        throw new HttpError(400, 'bad-settings', 'showFilter must be a boolean')
+      }
+      next.showFilter = patch.showFilter
+    }
+    save({ ...state, settings: next })
+    return { ...next }
+  }
+
   return {
     snapshot,
     createTag,
     updateTag,
     deleteTag,
     assign,
+    updateSettings,
     close: () => undefined,
   }
 }
@@ -211,13 +250,35 @@ function loadState(file: string): PersistedState {
 
 function seed(): PersistedState {
   const now = Date.now()
+  const labels = DEFAULT_LABELS[hostLanguage()] ?? DEFAULT_LABELS.en!
   let order = 10
-  const tags: PersistedTag[] = DEFAULT_TAGS.map(([id, label, color]) => {
-    const tag = { id, label, color, order, createdAt: now }
+  const tags: PersistedTag[] = DEFAULT_TAG_DEFS.map(([id, color]) => {
+    const tag = { id, label: labels[id] ?? id, color, order, createdAt: now }
     order += 10
     return tag
   })
-  return { version: STATE_VERSION, tags, sessions: {}, workspaces: {} }
+  return {
+    version: STATE_VERSION,
+    settings: { ...DEFAULT_SETTINGS },
+    tags,
+    sessions: {},
+    workspaces: {},
+  }
+}
+
+/**
+ * The host cannot see the browser's language, so fresh installs follow the
+ * machine locale. Anything unsupported falls back to English; the labels stay
+ * editable, so this only decides what the first run looks like.
+ */
+function hostLanguage(): string {
+  try {
+    const locale = Intl.DateTimeFormat().resolvedOptions().locale
+    const language = locale.split('-')[0]?.toLowerCase() ?? ''
+    return DEFAULT_LABELS[language] === undefined ? 'en' : language
+  } catch {
+    return 'en'
+  }
 }
 
 function normalizeState(raw: unknown): PersistedState {
@@ -249,7 +310,22 @@ function normalizeState(raw: unknown): PersistedState {
     }
   }
 
-  return { version: STATE_VERSION, tags, sessions, workspaces }
+  return {
+    version: STATE_VERSION,
+    settings: normalizeSettings(record.settings),
+    tags,
+    sessions,
+    workspaces,
+  }
+}
+
+/** Settings are additive: an older file simply lacks them. */
+function normalizeSettings(value: unknown): TagSettings {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return { ...DEFAULT_SETTINGS }
+  const record = value as Record<string, unknown>
+  return {
+    showFilter: typeof record.showFilter === 'boolean' ? record.showFilter : DEFAULT_SETTINGS.showFilter,
+  }
 }
 
 function normalizeTags(value: unknown): PersistedTag[] | undefined {
