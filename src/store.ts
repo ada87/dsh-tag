@@ -4,6 +4,8 @@ import { HttpError } from './errors.js'
 import {
   DEFAULT_SETTINGS,
   PROTOCOL_VERSION,
+  type ReadEntry,
+  type ReadPatch,
   type Snapshot,
   type Tag,
   type TagPatch,
@@ -16,7 +18,8 @@ const NAMED_COLORS = new Set([
   'gray', 'teal', 'pink', 'indigo', 'brown',
 ])
 const MAX_TAGS = 10
-const STATE_VERSION = 2
+const MAX_READS = 500
+const STATE_VERSION = 3
 
 /**
  * Business-oriented defaults; IDs stay stable so assignments survive renames.
@@ -60,6 +63,7 @@ interface PersistedState {
   tags: PersistedTag[]
   sessions: Record<string, string>
   workspaces: Record<string, PersistedWorkspace>
+  reads: Record<string, ReadEntry>
 }
 
 export interface TagStore {
@@ -69,6 +73,12 @@ export interface TagStore {
   deleteTag(id: string): void
   assign(kind: 'session' | 'workspace', targetId: string, tagId: string | null, path?: string): void
   updateSettings(patch: { showFilter?: unknown }): TagSettings
+  /** Current read watermarks, newest first is not required. */
+  reads(): Record<string, ReadEntry>
+  /** Apply one explicit read/unread change and return the stored entry. */
+  markRead(sessionId: string, patch: ReadPatch): ReadEntry
+  /** Merge a device's map; a newer `at` wins. Returns the merged map. */
+  mergeReads(input: unknown): Record<string, ReadEntry>
 }
 
 /**
@@ -125,6 +135,7 @@ export function openStore(
       tags: list,
       sessions,
       workspaces,
+      reads: { ...state.reads },
     }
   }
 
@@ -233,7 +244,45 @@ export function openStore(
     return { ...next }
   }
 
-  return { snapshot, createTag, updateTag, deleteTag, assign, updateSettings }
+  const reads = (): Record<string, ReadEntry> => ({ ...state.reads })
+
+  /** Writes clamp `at` so one device with a fast clock cannot win forever. */
+  const clampAt = (at: number): number => Math.min(at, Date.now() + 60_000)
+
+  const markRead = (sessionId: string, patch: ReadPatch): ReadEntry => {
+    const id = sessionId.trim()
+    if (id.length === 0 || id.length > 256) throw new HttpError(400, 'bad-target', 'a non-empty target id is required')
+    const current = state.reads[id]
+    const at = typeof patch.at === 'number' && Number.isFinite(patch.at) && patch.at >= 0
+      ? clampAt(patch.at)
+      : Date.now()
+    const readAt = readNumber(patch.readAt) ?? current?.readAt ?? 0
+    const unread = typeof patch.unread === 'boolean' ? patch.unread : current?.unread ?? false
+    const entry: ReadEntry = { readAt, unread, at }
+    save({ ...state, reads: capReads({ ...state.reads, [id]: entry }) })
+    return { ...entry }
+  }
+
+  const mergeReads = (input: unknown): Record<string, ReadEntry> => {
+    if (!isRecord(input)) throw new HttpError(400, 'bad-reads', 'reads must be an object')
+    const next: Record<string, ReadEntry> = { ...state.reads }
+    let changed = false
+    for (const [id, value] of Object.entries(input)) {
+      const key = id.trim()
+      if (key.length === 0 || key.length > 256) continue
+      const entry = normalizeReadEntry(value)
+      if (entry === undefined) continue
+      const at = clampAt(entry.at)
+      const current = next[key]
+      if (current !== undefined && current.at >= at) continue
+      next[key] = { ...entry, at }
+      changed = true
+    }
+    if (changed) save({ ...state, reads: capReads(next) })
+    return { ...state.reads }
+  }
+
+  return { snapshot, createTag, updateTag, deleteTag, assign, updateSettings, reads, markRead, mergeReads }
 }
 
 function loadState(file: string): PersistedState {
@@ -261,6 +310,7 @@ function seed(): PersistedState {
     tags,
     sessions: {},
     workspaces: {},
+    reads: {},
   }
 }
 
@@ -311,7 +361,40 @@ function normalizeState(raw: unknown): PersistedState {
     tags,
     sessions,
     workspaces,
+    reads: normalizeReads(raw.reads),
   }
+}
+
+/** Reads are additive: an older file simply has none. */
+function normalizeReads(value: unknown): Record<string, ReadEntry> {
+  const reads: Record<string, ReadEntry> = {}
+  if (!isRecord(value)) return reads
+  for (const [id, entry] of Object.entries(value)) {
+    const key = id.trim()
+    if (key.length === 0 || key.length > 256) continue
+    const normalized = normalizeReadEntry(entry)
+    if (normalized !== undefined) reads[key] = normalized
+  }
+  return capReads(reads)
+}
+
+function normalizeReadEntry(value: unknown): ReadEntry | undefined {
+  if (!isRecord(value)) return undefined
+  const readAt = readNumber(value.readAt)
+  const at = readNumber(value.at)
+  if (readAt === undefined || at === undefined) return undefined
+  return { readAt, unread: value.unread === true, at }
+}
+
+function readNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : undefined
+}
+
+/** Keep the shared map small; the sidebar only shows recent Sessions. */
+function capReads(reads: Record<string, ReadEntry>): Record<string, ReadEntry> {
+  const entries = Object.entries(reads)
+  if (entries.length <= MAX_READS) return reads
+  return Object.fromEntries(entries.sort((left, right) => right[1].at - left[1].at).slice(0, MAX_READS))
 }
 
 /** Settings are additive: an older file simply lacks them. */

@@ -1,6 +1,6 @@
 {
   "name": "dsh-tag",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Color tags for DSH sessions and workspaces: context-menu tags, colored titles, a sidebar filter bar, and 8 UI languages.",
   "type": "module",
   "main": "lib/index.js",

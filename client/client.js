@@ -520,6 +520,7 @@ body[data-ds-dark-theme]{
           tags: [],
           sessions: {},
           workspaces: [],
+          reads: {},
           loaded: false,
           error: null,
         }
@@ -561,6 +562,10 @@ body[data-ds-dark-theme]{
           const tag = tagOf(tagId)
           return tag === undefined ? null : textColor(tag.color)
         }
+        /**
+         * A Session is unread after an explicit mark or a newer activity stamp.
+         */
+        const sessionUpdated = new Map()
         function paint() {
           const rules = []
           for (const [sessionId, tagId] of Object.entries(state.sessions)) {
@@ -571,9 +576,26 @@ body[data-ds-dark-theme]{
             const color = tagColor(workspace.tagId)
             if (color !== null) rules.push(rule('workspace', workspace.id, color))
           }
+          // Unread Sessions share the tag layer: same rows, one extra rule.
+          for (const sessionId of unreadSessions()) {
+            rules.push(`[data-row-key="session:${cssSafe(sessionId)}"] [class*="_title"]{font-weight:600}`)
+          }
           colorStyle.textContent = rules.join('\n')
           renderFilter()
           applyFilter()
+        }
+        /** A Session is unread after an explicit mark or a newer activity stamp. */
+        function unreadSessions() {
+          const ids = []
+          for (const [sessionId, read] of Object.entries(state.reads)) {
+            if (read.unread === true) {
+              ids.push(sessionId)
+              continue
+            }
+            const updated = sessionUpdated.get(sessionId)
+            if (updated !== undefined && updated > read.readAt) ids.push(sessionId)
+          }
+          return ids
         }
         function cssSafe(value) {
           return String(value).replace(/["\\\r\n]/g, '')
@@ -642,7 +664,21 @@ body[data-ds-dark-theme]{
               }
             })
             .filter(item => item.id.length > 0 && typeof item.tagId === 'string' && item.tagId.length > 0)
-          return { settings, tags, sessions, workspaces }
+          return { settings, tags, sessions, workspaces, reads: normalizeReads(source.reads) }
+        }
+
+        /** Read watermarks are additive: an older host simply has none. */
+        function normalizeReads(value) {
+          const reads = {}
+          if (!isRecord(value)) return reads
+          for (const [id, entry] of Object.entries(value)) {
+            if (!isRecord(entry)) continue
+            const readAt = typeof entry.readAt === 'number' && entry.readAt >= 0 ? entry.readAt : undefined
+            const at = typeof entry.at === 'number' && entry.at >= 0 ? entry.at : undefined
+            if (readAt === undefined || at === undefined) continue
+            reads[id] = { readAt, unread: entry.unread === true, at }
+          }
+          return reads
         }
 
         // ── Filter bar ─────────────────────────────────────────────────────────
@@ -1494,12 +1530,20 @@ body[data-ds-dark-theme]{
               const ids = list.ids
               const next = items.map(item => [String(item.workspaceId), (item.sessionIds || []).map(String)])
               const archived = (ws.archivedSessionIds || []).map(String)
-              const nextSignature = JSON.stringify([next, archived, ids])
+              const stamps = ids.map((id) => {
+                const row = isRecord(list.byId) ? list.byId[String(id)] : undefined
+                const at = isRecord(row) && typeof row.updatedAt === 'number' ? row.updatedAt : 0
+                sessionUpdated.set(String(id), at)
+                return [String(id), at]
+              })
+              const nextSignature = JSON.stringify([next, archived, ids, stamps])
               if (nextSignature === signature) return
               signature = nextSignature
               workspaceMembers = new Map(next.map(([id, members]) => [id, new Set(members)]))
               archivedSessions = new Set(archived)
               sessionCatalog = new Set(ids.map(String))
+              // Activity stamps drive the unread weight, so repaint with them.
+              paint()
               scheduleFilter()
             } catch {
               // A build without these snapshots keeps the DOM-only fallback.
@@ -1515,6 +1559,26 @@ body[data-ds-dark-theme]{
             }
           }, 'dsh-tag: workspace membership')
         })
+
+        // Opening a Session clears its unread weight everywhere: the phone
+        // reads the same watermark from the snapshot.
+        ctx.effect(() => {
+          const onClick = (event) => {
+            const target = event.target
+            if (!(target instanceof Element)) return
+            const row = target.closest('[data-row-key^="session:"]')
+            if (row === null) return
+            const id = (row.getAttribute('data-row-key') || '').slice('session:'.length)
+            if (id.length === 0) return
+            const read = state.reads[id]
+            const updated = sessionUpdated.get(id) || 0
+            if (read !== undefined && read.unread !== true && updated <= read.readAt) return
+            void request('PUT', `/reads/${encodeURIComponent(id)}`, { readAt: Date.now(), unread: false })
+              .catch(() => undefined)
+          }
+          document.addEventListener('click', onClick, true)
+          return () => document.removeEventListener('click', onClick, true)
+        }, 'dsh-tag: mark read on open')
 
         ctx.effect(() => {
           filterObserver = new MutationObserver(scheduleFilter)

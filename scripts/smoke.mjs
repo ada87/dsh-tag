@@ -97,8 +97,24 @@ try {
     assert.deepEqual(response.json.tags.map(tag => tag.id), ['design', 'code', 'ops', 'temp'])
     assert.deepEqual(response.json.sessions, {})
     assert.deepEqual(response.json.workspaces, [])
-    assert.equal(response.json.version, 2)
+    assert.equal(response.json.version, 3)
+    assert.deepEqual(response.json.reads, {}, 'nothing is read before a Session is touched')
     assert.deepEqual(response.json.settings, { showFilter: true }, 'the filter bar is on by default')
+  }
+
+  {
+    const response = await call(route, 'PUT', '/tags/reads/s1', { readAt: 0, unread: true, at: 500 })
+    assert.equal(response.status, 200)
+    assert.deepEqual(response.json.read, { readAt: 0, unread: true, at: 500 })
+    assert.equal(response.json.snapshot.reads.s1.unread, true)
+    const older = await call(route, 'POST', '/tags/reads', {
+      sessions: { s1: { readAt: 100, unread: false, at: 400 } },
+    })
+    assert.equal(older.json.reads.s1.unread, true, 'an older device cannot clear a newer mark')
+    const newer = await call(route, 'POST', '/tags/reads', {
+      sessions: { s1: { readAt: 900, unread: false, at: 900 } },
+    })
+    assert.deepEqual(newer.json.reads.s1, { readAt: 900, unread: false, at: 900 })
   }
 
   {
@@ -189,7 +205,7 @@ try {
   {
     const response = await call(route, 'GET', '/tags/health')
     assert.equal(response.status, 200)
-    assert.deepEqual(response.json.features, { sessions: true, workspaces: true })
+    assert.deepEqual(response.json.features, { sessions: true, workspaces: true, reads: true })
   }
 
   {

@@ -19,6 +19,7 @@
 - 点工作区列表上方的色块过滤；命中的分组自动展开并显示数量
 - 设置 → **DSH Tag**：改名、换色、删除、新建。最多 10 个标签，颜色互不重复
 - 不需要过滤条时可以关掉
+- 未读会话标题加粗；打开即清除，同一状态会同步到手机
 
 ![DSH Tag 设置](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/settings.png)
 

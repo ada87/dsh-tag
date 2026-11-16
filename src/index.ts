@@ -18,7 +18,7 @@ import type {
   WorkspaceService,
 } from './host.js'
 import { openStore, type TagStore } from './store.js'
-import type { Snapshot, TagPatch } from './protocol.js'
+import type { ReadEntry, ReadPatch, Snapshot, TagPatch, TagService } from './protocol.js'
 
 export const name = 'dsh-tag'
 export const inject = ['webServer']
@@ -52,6 +52,22 @@ export async function apply(ctx: HostContext): Promise<void> {
   const store = openStore(stateFile, workspacePath)
   const hub = new SseHub()
   const handler = createHandler(ctx, store, hub)
+
+  // dsh-door authenticates phone requests and forwards read changes here, so
+  // the tag snapshot stays the single source of truth for colours and unread.
+  ctx.provide?.('dsh-tag', {
+    reads: () => store.reads(),
+    markRead: (sessionId: string, patch: ReadPatch): ReadEntry => {
+      const entry = store.markRead(sessionId, patch)
+      hub.broadcast(store.snapshot())
+      return entry
+    },
+    mergeReads: (entries: unknown): Record<string, ReadEntry> => {
+      const reads = store.mergeReads(entries)
+      hub.broadcast(store.snapshot())
+      return reads
+    },
+  } satisfies TagService)
 
   ctx.effect(() => {
     const dispose = webServer.register({ kind: 'prefix', path: BASE_PATH, handler })
@@ -88,9 +104,14 @@ function createHandler(
             ok: true,
             name: 'dsh-tag',
             version: VERSION,
-            features: { sessions: true, workspaces: true },
+            features: { sessions: true, workspaces: true, reads: true },
             tags: snapshot.tags.length,
+            reads: Object.keys(snapshot.reads).length,
           })
+          return
+        }
+        if (segments.length === 1 && segments[0] === 'reads') {
+          sendJson(res, 200, { reads: store.reads() })
           return
         }
         if (segments.length === 1 && segments[0] === 'events') {
@@ -141,6 +162,23 @@ function createHandler(
         const path = typeof input.path === 'string' ? input.path : undefined
         store.assign(kind, segments[1]!, tagId, path)
         sendState(res, store, hub, 200, {})
+        return
+      }
+      // Read watermarks: the web UI writes one Session, dsh-door forwards many.
+      if (method === 'POST' && segments.length === 1 && segments[0] === 'reads') {
+        const input = await readBody(req)
+        const reads = store.mergeReads(input.sessions ?? input)
+        sendState(res, store, hub, 200, { reads })
+        return
+      }
+      if ((method === 'PUT' || method === 'POST') && segments.length === 2 && segments[0] === 'reads') {
+        const input = await readBody(req)
+        const read = store.markRead(segments[1]!, {
+          ...(typeof input.readAt === 'number' ? { readAt: input.readAt } : {}),
+          ...(typeof input.unread === 'boolean' ? { unread: input.unread } : {}),
+          ...(typeof input.at === 'number' ? { at: input.at } : {}),
+        })
+        sendState(res, store, hub, 200, { read })
         return
       }
 

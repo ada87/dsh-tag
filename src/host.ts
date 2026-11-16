@@ -52,4 +52,6 @@ export interface HostContext {
   webServer?: WebService
   effect(fn: () => void | (() => void), label?: string): unknown
   get(name: string): unknown
+  /** Cordis reflection: expose an in-process service to other plugins. */
+  provide?(name: string, value: unknown): void
 }

@@ -42,6 +42,11 @@ Everything sits under `/tags`; there is no `/session-tags`.
 | DELETE | `/tags/:id` | Delete the tag and clear its assignments |
 | PUT | `/tags/sessions/:id` | `{ tagId: string \| null }` |
 | PUT | `/tags/workspaces/:id` | `{ tagId, path? }` |
+| GET | `/tags/reads` | Read watermarks only (public) |
+| PUT | `/tags/reads/:id` | Mark one Session `{ readAt?, unread?, at? }` |
+| POST | `/tags/reads` | Merge a device's map `{ sessions: { id: { readAt, unread, at } } }` |
+
+`reads` travels in the `/tags` snapshot, so a Session's colour and unread weight come from one place. Merges keep the newest `at`; dsh-door forwards the phone's writes after device authentication.
 
 Reads are public. Writes require a same-origin browser request, a loopback address, or an authenticated DSH connection.
 

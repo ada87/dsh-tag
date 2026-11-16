@@ -19,6 +19,7 @@ Plugins → Add plugin → `dsh-tag@0.1.1`
 - Click a color above the workspace list to filter; matching groups open with a count
 - Settings → **DSH Tag**: rename, recolor, delete, add. Up to 10 tags, one color each
 - Turn the filter bar off if you don't use it
+- Unread sessions are shown in bold; opening one clears it, and the same weight reaches the phone
 
 ![DSH Tag settings](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/settings.png)
 
