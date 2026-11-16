@@ -1,6 +1,6 @@
 # Marketplace checklist
 
-Repository-only notes for the `dsh-tag` release. The npm package ships `lib/`, `locale/`, the three READMEs, `LICENSE`, `icon.svg` and `cordis.patch.yml`; this folder is not published.
+Repository-only notes for the `dsh-tag` release. The npm package ships `lib/`, `locale/`, the eight READMEs, `LICENSE` and `cordis.patch.yml`; this folder is not published.
 
 ## Package facts the catalogs read
 

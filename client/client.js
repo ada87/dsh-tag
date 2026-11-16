@@ -20,6 +20,7 @@ window.__ModuleLoader__.load({
     const h = React.createElement
 
     const NS = 'dshTag'
+    const TITLE = 'DSH Tag'
     const API = '/tags'
     const EVENTS = '/tags/events'
     const MAX_TAGS = 10
@@ -45,16 +46,14 @@ window.__ModuleLoader__.load({
     const SWATCHES = Object.keys(COLORS)
 
     const zh = {
-      nav: '标签',
       menuSession: '标签',
       menuWorkspace: '工作区标签',
       clear: '清除标签',
-      noTags: '还没有标签，先去 设置 → 标签 创建',
+      noTags: '还没有标签，先去 设置 → DSH Tag 创建',
       newPlaceholder: '新标签文字…',
       add: '添加',
       remove: '删除',
       confirmDelete: '删除标签「{label}」？对应标记也会清除。',
-      settingsTitle: '标签',
       empty: '还没有标签，先创建一个。',
       failed: '标签操作失败',
       limit: '最多支持 10 个标签',
@@ -83,16 +82,14 @@ window.__ModuleLoader__.load({
     }
 
     const en = {
-      nav: 'Tags',
       menuSession: 'Tags',
       menuWorkspace: 'Workspace tags',
       clear: 'Clear tag',
-      noTags: 'No tags yet — create one in Settings → Tags',
+      noTags: 'No tags yet — create one in Settings → DSH Tag',
       newPlaceholder: 'New tag label…',
       add: 'Add',
       remove: 'Delete',
       confirmDelete: 'Delete “{label}”? Its assignments will be cleared.',
-      settingsTitle: 'Tags',
       empty: 'No tags yet — create one below.',
       failed: 'Tag update failed',
       limit: 'At most 10 tags are supported',
@@ -121,16 +118,14 @@ window.__ModuleLoader__.load({
     }
 
     const ja = {
-      nav: 'タグ',
       menuSession: 'タグ',
       menuWorkspace: 'ワークスペースのタグ',
       clear: 'タグを解除',
-      noTags: 'タグがまだありません。「設定 → タグ」で作成できます',
+      noTags: 'タグがまだありません。「設定 → DSH Tag」で作成できます',
       newPlaceholder: '新しいタグ名…',
       add: '追加',
       remove: '削除',
       confirmDelete: '「{label}」を削除しますか？付いているタグもすべて解除されます。',
-      settingsTitle: 'タグ',
       empty: 'タグがまだありません。下から作成してください。',
       failed: 'タグを更新できませんでした',
       limit: 'タグは最大 10 個までです',
@@ -159,16 +154,14 @@ window.__ModuleLoader__.load({
     }
 
     const es = {
-      nav: 'Etiquetas',
       menuSession: 'Etiquetas',
       menuWorkspace: 'Etiquetas del espacio de trabajo',
       clear: 'Quitar etiqueta',
-      noTags: 'Aún no hay etiquetas; créala en Ajustes → Etiquetas',
+      noTags: 'Aún no hay etiquetas; créala en Ajustes → DSH Tag',
       newPlaceholder: 'Nombre de la nueva etiqueta…',
       add: 'Añadir',
       remove: 'Eliminar',
       confirmDelete: '¿Eliminar «{label}»? También se quitará de todo lo que la use.',
-      settingsTitle: 'Etiquetas',
       empty: 'Aún no hay etiquetas; crea una abajo.',
       failed: 'No se pudo actualizar la etiqueta',
       limit: 'Se admiten 10 etiquetas como máximo',
@@ -197,16 +190,14 @@ window.__ModuleLoader__.load({
     }
 
     const fr = {
-      nav: 'Étiquettes',
       menuSession: 'Étiquettes',
       menuWorkspace: 'Étiquettes de l’espace de travail',
       clear: 'Retirer l’étiquette',
-      noTags: 'Pas encore d’étiquette — créez-en une dans Réglages → Étiquettes',
+      noTags: 'Pas encore d’étiquette — créez-en une dans Réglages → DSH Tag',
       newPlaceholder: 'Nom de la nouvelle étiquette…',
       add: 'Ajouter',
       remove: 'Supprimer',
       confirmDelete: 'Supprimer « {label} » ? Elle sera aussi retirée partout où elle est utilisée.',
-      settingsTitle: 'Étiquettes',
       empty: 'Aucune étiquette pour l’instant — créez-en une ci-dessous.',
       failed: 'Impossible de mettre à jour l’étiquette',
       limit: '10 étiquettes maximum',
@@ -235,16 +226,14 @@ window.__ModuleLoader__.load({
     }
 
     const de = {
-      nav: 'Tags',
       menuSession: 'Tags',
       menuWorkspace: 'Workspace-Tags',
       clear: 'Tag entfernen',
-      noTags: 'Noch keine Tags – lege sie unter Einstellungen → Tags an',
+      noTags: 'Noch keine Tags – lege sie unter Einstellungen → DSH Tag an',
       newPlaceholder: 'Name des neuen Tags…',
       add: 'Hinzufügen',
       remove: 'Löschen',
       confirmDelete: '„{label}“ löschen? Der Tag wird überall entfernt, wo er gesetzt ist.',
-      settingsTitle: 'Tags',
       empty: 'Noch keine Tags – lege unten einen an.',
       failed: 'Tag konnte nicht aktualisiert werden',
       limit: 'Höchstens 10 Tags',
@@ -273,16 +262,14 @@ window.__ModuleLoader__.load({
     }
 
     const ru = {
-      nav: 'Метки',
       menuSession: 'Метки',
       menuWorkspace: 'Метки рабочего пространства',
       clear: 'Снять метку',
-      noTags: 'Меток пока нет — создайте в «Настройки → Метки»',
+      noTags: 'Меток пока нет — создайте в «Настройки → DSH Tag»',
       newPlaceholder: 'Название новой метки…',
       add: 'Добавить',
       remove: 'Удалить',
       confirmDelete: 'Удалить метку «{label}»? Она также снимется со всех элементов.',
-      settingsTitle: 'Метки',
       empty: 'Меток пока нет — создайте ниже.',
       failed: 'Не удалось обновить метку',
       limit: 'Не более 10 меток',
@@ -311,16 +298,14 @@ window.__ModuleLoader__.load({
     }
 
     const pt = {
-      nav: 'Etiquetas',
       menuSession: 'Etiquetas',
       menuWorkspace: 'Etiquetas do espaço de trabalho',
       clear: 'Remover etiqueta',
-      noTags: 'Ainda não há etiquetas — crie em Configurações → Etiquetas',
+      noTags: 'Ainda não há etiquetas — crie em Configurações → DSH Tag',
       newPlaceholder: 'Nome da nova etiqueta…',
       add: 'Adicionar',
       remove: 'Excluir',
       confirmDelete: 'Excluir “{label}”? Ela também será removida de tudo o que a usa.',
-      settingsTitle: 'Etiquetas',
       empty: 'Ainda sem etiquetas — crie uma abaixo.',
       failed: 'Não foi possível atualizar a etiqueta',
       limit: 'No máximo 10 etiquetas',
@@ -1415,7 +1400,7 @@ body[data-ds-dark-theme]{
 
           return h('section', { className: 'dsh-tag-settings' },
             h('header', { className: 'dsh-tag-settingsHead' },
-              h('h2', { className: 'dsh-tag-settingsTitle' }, t('settingsTitle'))),
+              h('h2', { className: 'dsh-tag-settingsTitle' }, TITLE)),
             h('div', { className: 'dsh-tag-switchRow' },
               h('div', { className: 'dsh-tag-switchText' },
                 h('div', { className: 'dsh-tag-switchTitle' }, t('showFilter')),
@@ -1642,7 +1627,7 @@ body[data-ds-dark-theme]{
           name: 'settings.section',
           id: 'dsh-tag',
           order: 6,
-          label: () => t('nav'),
+          label: () => TITLE,
         }, SettingsPage))
 
         ctx.slots.inject('settings.section.icon', () => ctx.slots.register({

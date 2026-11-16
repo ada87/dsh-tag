@@ -1,8 +1,6 @@
-<p align="center"><img src="https://raw.githubusercontent.com/ada87/dsh-tag/main/icon.svg" width="88" alt="dsh-tag"></p>
+# DSH Tag
 
-# dsh-tag
-
-[English](README.md) | 中文 | [日本語](README.ja.md)
+[English](README.md) | 中文 | [日本語](README.ja.md) | [Español](README.es.md) | [Français](README.fr.md) | [Deutsch](README.de.md) | [Русский](README.ru.md) | [Português](README.pt.md)
 
 给 DeepSeek Harness 的会话和工作区加彩色标签：一行一个标签，标题跟着变色，工作区列表上方的色条按标签过滤。
 
@@ -19,10 +17,10 @@
 - 右键会话或工作区标题 → **标签** → 选颜色
 - 标在工作区上的标签覆盖整组
 - 点工作区列表上方的色块过滤；命中的分组自动展开并显示数量
-- 设置 → 标签：改名、换色、删除、新建。最多 10 个标签，颜色互不重复
+- 设置 → **DSH Tag**：改名、换色、删除、新建。最多 10 个标签，颜色互不重复
 - 不需要过滤条时可以关掉
 
-![标签设置](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/settings.png)
+![DSH Tag 设置](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/settings.png)
 
 API、颜色、兼容性和开发说明：[docs/REFERENCE.md](https://github.com/ada87/dsh-tag/blob/main/docs/REFERENCE.md)。
 
