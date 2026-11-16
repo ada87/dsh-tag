@@ -65,7 +65,6 @@ window.__ModuleLoader__.load({
       remove: '删除',
       confirmDelete: '删除标签「{label}」？对应标记也会清除。',
       settingsTitle: '标签',
-      settingsDesc: '会话和工作区共用同一套标签。右键会话或工作区即可打标签；标题颜色就是标签颜色。过滤时，标在工作区上的标签会带出整组会话，标在会话上的只带出该会话。',
       empty: '还没有标签，先创建一个。',
       failed: '标签操作失败',
       limit: '最多支持 10 个标签',
@@ -89,7 +88,6 @@ window.__ModuleLoader__.load({
       remove: 'Delete',
       confirmDelete: 'Delete “{label}”? Its assignments will be cleared.',
       settingsTitle: 'Tags',
-      settingsDesc: 'Sessions and workspaces share this tag set. Right-click either to set a tag; the title uses the tag color. Filtering by a workspace tag includes its whole group; a session tag only includes that session.',
       empty: 'No tags yet — create one below.',
       failed: 'Tag update failed',
       limit: 'At most 10 tags are supported',
@@ -108,7 +106,7 @@ window.__ModuleLoader__.load({
 .dsh-tag-input{flex:1;min-width:120px;box-sizing:border-box;height:34px;padding:0 10px;border-radius:8px;border:1px solid var(--dsw-alias-border-l4,rgba(127,127,127,.3));background:var(--dsw-alias-button-elevated-fill,rgba(127,127,127,.06));color:inherit;font:inherit;outline:none}
 .dsh-tag-input:focus{border-color:var(--dsw-alias-state-business-primary,#3d7bfd)}
 .dsh-tag-swatches{display:flex;align-items:center;gap:5px}
-.dsh-tag-swatch{position:relative;width:18px;height:18px;padding:0;border:0;border-radius:50%;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.dsh-tag-swatch{position:relative;width:20px;height:20px;padding:0;border:0;border-radius:50%;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
 .dsh-tag-swatch.is-current{box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
 .dsh-tag-swatch.is-current::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;line-height:1;text-shadow:0 1px 1px rgba(0,0,0,.45)}
 .dsh-tag-swatch.is-used{opacity:.22;cursor:not-allowed}
@@ -117,7 +115,7 @@ window.__ModuleLoader__.load({
 .dsh-tag-pickerButton:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.08))}
 .dsh-tag-pickerButton:disabled{cursor:default;opacity:.45}
 .dsh-tag-pickerButton .dsh-tag-dot{width:20px;height:20px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
-.dsh-tag-colorMenu{position:absolute;top:calc(100% + 4px);left:0;z-index:30;display:flex;align-items:center;gap:7px;padding:8px;border-radius:10px;background:var(--dsw-alias-surface-primary,#fff);border:1px solid var(--dsw-alias-border-l3,rgba(127,127,127,.22));box-shadow:0 8px 20px rgba(0,0,0,.14)}
+.dsh-tag-colorMenu{position:absolute;top:calc(100% + 4px);left:0;z-index:30;display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:var(--dsw-alias-surface-primary,#fff);border:1px solid var(--dsw-alias-border-l3,rgba(127,127,127,.22));box-shadow:0 8px 20px rgba(0,0,0,.14)}
 .dsh-tag-colorMenu.is-right{left:auto;right:0}
 .dsh-tag-dotButton{display:flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:0;border-radius:50%;background:transparent;cursor:pointer}
 .dsh-tag-dotButton:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.12))}
@@ -136,7 +134,6 @@ window.__ModuleLoader__.load({
 .dsh-tag-settings{display:flex;flex-direction:column;gap:14px;width:100%}
 .dsh-tag-settingsHead{display:flex;flex-direction:column;gap:4px}
 .dsh-tag-settingsTitle{margin:0;font-size:18px;font-weight:600;line-height:26px;color:var(--dsw-alias-label-primary,#111)}
-.dsh-tag-settingsDesc{margin:0;font-size:13px;line-height:19px;color:var(--dsw-alias-label-tertiary,#888)}
 .dsh-tag-settingsList{display:flex;flex-direction:column;gap:2px;padding:0;border-radius:0;background:transparent}
 .dsh-tag-rowWrap{display:flex;flex-direction:column;padding:0 4px;border-radius:8px}
 .dsh-tag-rowWrap:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.06))}
@@ -150,14 +147,14 @@ window.__ModuleLoader__.load({
 .dsh-tag-filterWrap{flex:none;box-sizing:border-box;width:100%}
 .dsh-tag-filter{display:flex;align-items:center;gap:6px;flex:none;box-sizing:border-box;width:100%;padding:2px var(--dsh-sidebar-row-padding,8px) 6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
 .dsh-tag-filter::-webkit-scrollbar{display:none}
-.dsh-tag-filterAll{position:relative;width:22px;height:22px;padding:0;border:0;border-radius:50%;flex:none;cursor:pointer;background:conic-gradient(#22C55E 0 36deg,#F59E0B 36deg 72deg,#3B82F6 72deg 108deg,#EF4444 108deg 144deg,#8B5CF6 144deg 180deg,#6B7280 180deg 216deg,#14B8A6 216deg 252deg,#EC4899 252deg 288deg,#6366F1 288deg 324deg,#A2845E 324deg 360deg);opacity:.55;transition:opacity .12s ease}
-.dsh-tag-filterAll::after{content:'';position:absolute;inset:5px;border-radius:50%;background:var(--dsw-alias-surface-primary,#fff)}
+.dsh-tag-filterAll{position:relative;width:20px;height:20px;padding:0;border:0;border-radius:50%;flex:none;cursor:pointer;background:conic-gradient(#22C55E 0 36deg,#F59E0B 36deg 72deg,#3B82F6 72deg 108deg,#EF4444 108deg 144deg,#8B5CF6 144deg 180deg,#6B7280 180deg 216deg,#14B8A6 216deg 252deg,#EC4899 252deg 288deg,#6366F1 288deg 324deg,#A2845E 324deg 360deg);opacity:.55;transition:opacity .12s ease}
+.dsh-tag-filterAll::after{content:'';position:absolute;inset:4px;border-radius:50%;background:var(--dsw-alias-surface-primary,#fff)}
 .dsh-tag-filterAll:hover{opacity:1}
 .dsh-tag-filterAll.is-active{opacity:1}
-.dsh-tag-filterBlock{position:relative;width:22px;height:22px;padding:0;border:0;border-radius:6px;flex:none;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);transition:opacity .12s ease}
+.dsh-tag-filterBlock{position:relative;width:20px;height:20px;padding:0;border:0;border-radius:50%;flex:none;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);transition:opacity .12s ease}
 .dsh-tag-filterBlock:hover{opacity:.82}
 .dsh-tag-filterBlock.is-active{opacity:1}
-.dsh-tag-filterBlock.is-active::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;line-height:1;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.dsh-tag-filterBlock.is-active::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;line-height:1;text-shadow:0 1px 2px rgba(0,0,0,.5)}
 .dsh-tag-filterEmpty{padding:2px var(--dsh-sidebar-row-padding,8px) 8px;font-size:12px;line-height:17px;color:var(--dsw-alias-label-tertiary,#888)}
 `
 
@@ -610,7 +607,8 @@ window.__ModuleLoader__.load({
          * the filter never points at a session the user cannot see.
          */
         function revealMatches(groups) {
-          if (groups === null) return
+          const unresolved = new Set()
+          if (groups === null) return unresolved
           for (const key of expandedKeys(groups)) {
             if (userCollapsed.has(key)) continue
             const workspaceId = key.slice('workspace:'.length)
@@ -635,7 +633,12 @@ window.__ModuleLoader__.load({
               autoRevealed.add(key)
               if (!missingFrom(renderedSessionIds())) break
             }
+            // If the list still does not contain a match (stale catalog, very
+            // large group), keep its show-more control visible so the data is
+            // reachable instead of silently filtering it out.
+            if (missingFrom(renderedSessionIds())) unresolved.add(key)
           }
+          return unresolved
         }
 
         function updateFilterEmpty(activeTag, groups) {
@@ -669,12 +672,17 @@ window.__ModuleLoader__.load({
           }
           const groups = computeGroups(activeTag.id)
           expandMatches(groups)
-          revealMatches(groups)
+          const unresolvedOverflow = revealMatches(groups)
           const rules = ['[data-row-key^="session:"]{display:none!important}']
-          // While filtering, every non-matching Session row is hidden, so a
-          // group's "show more" control must go too: its count describes the
-          // unfiltered list and clicking it only makes the result jump around.
-          rules.push('[data-row-key^="overflow:"]{display:none!important}')
+          // With derived data we can prove every match is rendered before
+          // hiding the show-more controls. Without it, keep the old behaviour:
+          // only the expanded "collapse" control is hidden, so a tagged row can
+          // still be reached by expanding the group manually.
+          if (groups === null) {
+            rules.push('[data-row-key^="overflow:"][aria-expanded="true"]{display:none!important}')
+          } else {
+            rules.push('[data-row-key^="overflow:"]{display:none!important}')
+          }
           const show = new Set()
           for (const [sessionId, owner] of Object.entries(state.sessions)) {
             if (owner === activeTag.id) show.add(sessionId)
@@ -708,6 +716,10 @@ window.__ModuleLoader__.load({
             }
             if (groups.ungrouped === 0) hideGroup('workspace:')
             else badge('workspace:', groups.ungrouped)
+            for (const key of unresolvedOverflow) {
+              const workspaceId = key.slice('workspace:'.length)
+              rules.push(`[data-row-key="overflow:${cssSafe(workspaceId)}"]{display:flex!important}`)
+            }
           }
           filterStyle.textContent = rules.join('\n')
           updateFilterEmpty(activeTag, groups)
@@ -997,8 +1009,7 @@ window.__ModuleLoader__.load({
 
           return h('section', { className: 'dsh-tag-settings' },
             h('header', { className: 'dsh-tag-settingsHead' },
-              h('h2', { className: 'dsh-tag-settingsTitle' }, t('settingsTitle')),
-              h('p', { className: 'dsh-tag-settingsDesc' }, t('settingsDesc'))),
+              h('h2', { className: 'dsh-tag-settingsTitle' }, t('settingsTitle'))),
             error === null ? null : h('p', { className: 'dsh-tag-error' }, error),
             snapshot.error === null ? null : h('p', { className: 'dsh-tag-error' }, snapshot.error),
             snapshot.tags.length === 0
