@@ -71,6 +71,7 @@ window.__ModuleLoader__.load({
       limit: '最多支持 10 个标签',
       noColors: '没有可用的颜色了',
       cycleColor: '切换颜色',
+      color: '颜色',
       filterAll: '全部',
       filterTitle: '按标签过滤会话',
       filterStatus: '过滤：{label}',
@@ -97,6 +98,7 @@ window.__ModuleLoader__.load({
       limit: 'At most 10 tags are supported',
       noColors: 'No colors left',
       cycleColor: 'Change color',
+      color: 'Color',
       filterAll: 'All',
       filterTitle: 'Filter sessions by tag',
       filterStatus: 'Filter: {label}',
@@ -115,6 +117,13 @@ window.__ModuleLoader__.load({
 .dsh-tag-swatch{width:16px;height:16px;padding:0;border:2px solid transparent;border-radius:50%;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
 .dsh-tag-swatch.is-current{border-color:var(--dsw-alias-label-primary,#111);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 0 0 1px var(--dsw-alias-label-primary,#111)}
 .dsh-tag-swatch.is-used{opacity:.22;cursor:not-allowed}
+.dsh-tag-dotWrap{position:relative;display:flex;align-items:center;flex:none}
+.dsh-tag-pickerButton{display:flex;align-items:center;gap:3px;height:28px;padding:0 4px;border:0;border-radius:7px;background:transparent;cursor:pointer}
+.dsh-tag-pickerButton:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.12))}
+.dsh-tag-pickerButton:disabled{cursor:default;opacity:.45}
+.dsh-tag-pickerChevron{color:var(--dsw-alias-label-tertiary,#888)}
+.dsh-tag-colorMenu{position:absolute;top:calc(100% + 4px);left:0;z-index:30;display:flex;align-items:center;gap:6px;padding:8px;border-radius:10px;background:var(--dsw-alias-surface-primary,#fff);border:1px solid var(--dsw-alias-border-l3,rgba(127,127,127,.22));box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.dsh-tag-colorMenu.is-right{left:auto;right:0}
 .dsh-tag-dotButton{display:flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:0;border-radius:50%;background:transparent;cursor:pointer}
 .dsh-tag-dotButton:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.12))}
 .dsh-tag-dotButton:disabled{cursor:default;opacity:.5}
@@ -849,6 +858,68 @@ window.__ModuleLoader__.load({
         }
 
         // ── Settings ───────────────────────────────────────────────────────────
+        /**
+         * Color trigger: the dot opens a small listbox of the colors still
+         * available to this row. Used colors never reach the menu.
+         */
+        function ColorPicker({ value, options, disabled = false, align = 'left', onChange, label }) {
+          const [open, setOpen] = React.useState(false)
+          const wrapRef = React.useRef(null)
+
+          React.useEffect(() => {
+            if (!open) return undefined
+            const onDown = (event) => {
+              if (wrapRef.current !== null && !wrapRef.current.contains(event.target)) setOpen(false)
+            }
+            document.addEventListener('mousedown', onDown)
+            return () => document.removeEventListener('mousedown', onDown)
+          }, [open])
+
+          return h('div', { className: 'dsh-tag-dotWrap', ref: wrapRef },
+            h('button', {
+              type: 'button',
+              className: 'dsh-tag-pickerButton',
+              disabled,
+              'aria-label': label,
+              title: label,
+              'aria-haspopup': 'listbox',
+              'aria-expanded': open,
+              onClick: () => setOpen(current => !current),
+            },
+            h('span', { className: 'dsh-tag-dot', style: { background: swatch(value) }, 'aria-hidden': 'true' }),
+            h('svg', {
+              className: 'dsh-tag-pickerChevron',
+              width: 9,
+              height: 9,
+              viewBox: '0 0 10 10',
+              'aria-hidden': true,
+            }, h('path', {
+              d: 'M2 3.5L5 6.5L8 3.5',
+              fill: 'none',
+              stroke: 'currentColor',
+              strokeWidth: 1.2,
+              strokeLinecap: 'round',
+              strokeLinejoin: 'round',
+            }))),
+            open && options.length > 0
+              ? h('div', {
+                className: 'dsh-tag-colorMenu' + (align === 'right' ? ' is-right' : ''),
+                role: 'listbox',
+              }, options.map(name => h('button', {
+                key: name,
+                type: 'button',
+                className: 'dsh-tag-swatch' + (value === name ? ' is-current' : ''),
+                style: { background: swatch(name) },
+                'aria-label': name,
+                title: name,
+                onClick: () => {
+                  setOpen(false)
+                  onChange(name)
+                },
+              })))
+              : null)
+        }
+
         function TagRow({ tag, tags }) {
           const [text, setText] = React.useState(tag.label)
           const [busy, setBusy] = React.useState(false)
@@ -856,7 +927,7 @@ window.__ModuleLoader__.load({
           const usedByOthers = new Set(
             tags.filter(item => item.id !== tag.id).map(item => item.color),
           )
-          const nextColor = SWATCHES.find(name => name !== tag.color && !usedByOthers.has(name))
+          const colorOptions = SWATCHES.filter(name => name === tag.color || !usedByOthers.has(name))
 
           React.useEffect(() => {
             setText(tag.label)
@@ -882,10 +953,6 @@ window.__ModuleLoader__.load({
           const recolor = (color) => {
             void run(() => request('PATCH', `/${encodeURIComponent(tag.id)}`, { color }))
           }
-          const cycleColor = () => {
-            if (nextColor === undefined) return
-            recolor(nextColor)
-          }
           const remove = () => {
             if (!window.confirm(t('confirmDelete', { label: tag.label }))) return
             void run(() => request('DELETE', `/${encodeURIComponent(tag.id)}`))
@@ -893,18 +960,13 @@ window.__ModuleLoader__.load({
 
           return h('div', { className: 'dsh-tag-rowWrap' },
             h('div', { className: 'dsh-tag-row' },
-              h('button', {
-                type: 'button',
-                className: 'dsh-tag-dotButton',
-                disabled: busy || nextColor === undefined,
-                'aria-label': t('cycleColor'),
-                title: t('cycleColor'),
-                onClick: cycleColor,
-              }, h('span', {
-                className: 'dsh-tag-dot',
-                style: { background: swatch(tag.color) },
-                'aria-hidden': 'true',
-              })),
+              h(ColorPicker, {
+                value: tag.color,
+                options: colorOptions,
+                disabled: busy,
+                onChange: recolor,
+                label: t('cycleColor'),
+              }),
               h('input', {
                 className: 'dsh-tag-input',
                 value: text,
@@ -919,18 +981,6 @@ window.__ModuleLoader__.load({
                   event.currentTarget.blur()
                 },
               }),
-              h('div', { className: 'dsh-tag-swatches' }, SWATCHES.map(name => h('button', {
-                key: name,
-                type: 'button',
-                className: 'dsh-tag-swatch'
-                  + (tag.color === name ? ' is-current' : '')
-                  + (usedByOthers.has(name) && tag.color !== name ? ' is-used' : ''),
-                style: { background: swatch(name) },
-                'aria-label': name,
-                title: name,
-                disabled: busy || (usedByOthers.has(name) && tag.color !== name),
-                onClick: () => recolor(name),
-              }))),
               h('button', {
                 type: 'button',
                 className: 'dsh-tag-delete',
@@ -1020,16 +1070,14 @@ window.__ModuleLoader__.load({
                   create()
                 },
               }),
-              h('div', { className: 'dsh-tag-swatches' }, availableColors.map(name => h('button', {
-                key: name,
-                type: 'button',
-                className: 'dsh-tag-swatch' + (selectedColor === name ? ' is-current' : ''),
-                style: { background: swatch(name) },
-                'aria-label': name,
-                title: name,
-                disabled: busy,
-                onClick: () => setColor(name),
-              }))),
+              h(ColorPicker, {
+                value: selectedColor,
+                options: availableColors,
+                disabled: busy || atLimit,
+                align: 'right',
+                onChange: setColor,
+                label: t('color'),
+              }),
               h('button', {
                 type: 'button',
                 className: 'dsh-tag-primary',
