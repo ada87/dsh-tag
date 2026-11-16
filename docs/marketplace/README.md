@@ -57,12 +57,14 @@ The current contributing guide does not mention a star threshold. The old "star 
 
 ## Publishing
 
-The local npm client points at `https://registry.npmmirror.com`, which is a read-only mirror. Publish to npmjs explicitly:
+The local npm client points at `https://registry.npmmirror.com`, which is a read-only mirror. `package.json` pins `publishConfig.registry` to npmjs, so a plain publish goes to the right place; logging in explicitly avoids writing the token to the mirror config:
 
 ```sh
 npm login --registry=https://registry.npmjs.org
-npm publish --registry=https://registry.npmjs.org
+npm publish
 ```
+
+`prepublishOnly` rebuilds and reruns the host smoke test before the tarball is created.
 
 Then verify:
 

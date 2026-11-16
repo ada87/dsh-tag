@@ -57,13 +57,18 @@
   "engines": {
     "dsh": ">=0.2.2-rc.1 <0.3.0"
   },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org",
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json && node build.mjs && npm run check:client",
     "dev": "node build.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "check:client": "node --check client/client.js",
     "test:host": "node scripts/smoke.mjs",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run build && npm run test:host"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
