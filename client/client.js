@@ -155,6 +155,8 @@ window.__ModuleLoader__.load({
 .dsh-tag-filterBlock:hover{opacity:.82}
 .dsh-tag-filterBlock.is-active{opacity:1}
 .dsh-tag-filterBlock.is-active::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;line-height:1;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.dsh-tag-menuLabel{display:flex;align-items:center;justify-content:space-between;gap:20px;width:100%}
+.dsh-tag-menuCheck{flex:none;color:var(--dsw-alias-state-business-primary,#3d7bfd);font-weight:600}
 .dsh-tag-filterEmpty{padding:2px var(--dsh-sidebar-row-padding,8px) 8px;font-size:12px;line-height:17px;color:var(--dsw-alias-label-tertiary,#888)}
 `
 
@@ -820,7 +822,11 @@ window.__ModuleLoader__.load({
             const active = current === tag.id
             return {
               id: `tag:${tag.id}`,
-              label: `${active ? '✓ ' : ''}${tag.label}`,
+              label: active
+                ? h('span', { className: 'dsh-tag-menuLabel' },
+                  h('span', null, tag.label),
+                  h('span', { className: 'dsh-tag-menuCheck', 'aria-hidden': 'true' }, '✓'))
+                : tag.label,
               icon: { key: 'dsh-tag.dot', src: dotSrc(tag.color) },
               failureLabel: t('failed'),
               run: () => setTag(kind, target, active ? null : tag.id),
