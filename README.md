@@ -8,18 +8,21 @@ Color tags for DeepSeek Harness sessions and workspaces: one tag per row, the ti
 
 ![Two workspaces with tagged sessions and the filter bar](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/sidebar.png)
 
-- One tag per session or workspace; a workspace tag covers its whole group
-- Click a color to filter; matching groups open with a count, empty groups hide
-- Settings → Tags: rename, recolor, delete, add. Up to 10 tags, one color each
-- Turn the filter bar off if you don't use it
-
-![Tags settings](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/settings.png)
-
 ## Install
 
 Plugins → Add plugin → `dsh-tag`
 
 ![Add plugin](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/install.png)
+
+## Use
+
+- Right-click a session or a workspace header → **Tags** → pick a color
+- A workspace tag covers its whole group
+- Click a color above the workspace list to filter; matching groups open with a count
+- Settings → Tags: rename, recolor, delete, add. Up to 10 tags, one color each
+- Turn the filter bar off if you don't use it
+
+![Tags settings](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/settings.png)
 
 API, colors, compatibility and development: [docs/REFERENCE.md](https://github.com/ada87/dsh-tag/blob/main/docs/REFERENCE.md).
 

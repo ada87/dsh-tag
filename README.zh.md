@@ -8,18 +8,21 @@
 
 ![两个工作区、彩色标题和过滤条](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/sidebar.png)
 
-- 每个会话或工作区只保留一个标签；标在工作区上的标签覆盖整组
-- 点色块过滤，命中的分组自动展开并显示数量，没有命中的分组隐藏
-- 设置 → 标签：改名、换色、删除、新建。最多 10 个标签，颜色互不重复
-- 不需要过滤条时可以关掉
-
-![标签设置](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/settings.png)
-
 ## 安装
 
 插件 → 添加插件 → `dsh-tag`
 
 ![添加插件](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/install.png)
+
+## 使用
+
+- 右键会话或工作区标题 → **标签** → 选颜色
+- 标在工作区上的标签覆盖整组
+- 点工作区列表上方的色块过滤；命中的分组自动展开并显示数量
+- 设置 → 标签：改名、换色、删除、新建。最多 10 个标签，颜色互不重复
+- 不需要过滤条时可以关掉
+
+![标签设置](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/settings.png)
 
 API、颜色、兼容性和开发说明：[docs/REFERENCE.md](https://github.com/ada87/dsh-tag/blob/main/docs/REFERENCE.md)。
 

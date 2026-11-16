@@ -11,10 +11,6 @@ The filter bar sits above the workspace list:
 - Groups with no matches are hidden
 - Click the same color again, or the rainbow **All**, to restore everything, including groups the filter opened
 
-![Filtering by one tag](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/filter.png)
-
-![The Tags submenu](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/menu.png)
-
 Settings → Tags is a card list: rename inline, recolor from unused colors, delete with one confirmation, add at the bottom. Up to 10 tags, each with a unique color. **Show filter bar** hides the bar and clears any active filter.
 
 State lives in `<DSH_HOME>/state/dsh-tag.json`; windows and devices sync over SSE.
