@@ -75,7 +75,7 @@ dsh plugin --profile web add dsh-tag
 
 ### 颜色
 
-`green` / `amber` / `blue` / `red` / `purple` / `gray`，或 `#rrggbb`。命名颜色在标题上映射到 dsh 主题 token，换深浅色不会突兀；过滤条和菜单圆点使用固定 hex。
+`green` / `amber` / `blue` / `red` / `purple` / `gray` / `teal` / `pink` / `indigo` / `brown`。命名颜色在标题上映射到 dsh 主题 token，换深浅色不会突兀；过滤条和菜单圆点使用固定 hex。颜色在标签之间唯一，最多 10 个标签；新建和换色只能选择尚未被占用的预设颜色。
 
 ## 存储
 

@@ -21,7 +21,10 @@ window.__ModuleLoader__.load({
     const NS = 'dshTag'
     const API = '/tags'
     const EVENTS = '/tags/events'
-    const SWATCHES = ['green', 'amber', 'blue', 'red', 'purple', 'gray']
+    const SWATCHES = [
+      'green', 'amber', 'blue', 'red', 'purple',
+      'gray', 'teal', 'pink', 'indigo', 'brown',
+    ]
 
     /** Concrete colors for menu dots and settings swatches. */
     const HEX = {
@@ -31,6 +34,10 @@ window.__ModuleLoader__.load({
       red: '#EF4444',
       purple: '#8B5CF6',
       gray: '#6B7280',
+      teal: '#14B8A6',
+      pink: '#EC4899',
+      indigo: '#6366F1',
+      brown: '#A2845E',
     }
 
     /** Theme-aware colors for title text. */
@@ -41,6 +48,10 @@ window.__ModuleLoader__.load({
       red: 'var(--dsw-alias-state-error-primary)',
       purple: '#8B5CF6',
       gray: 'var(--dsw-alias-label-caption)',
+      teal: '#14B8A6',
+      pink: '#EC4899',
+      indigo: '#6366F1',
+      brown: '#A2845E',
     }
 
     const zh = {
@@ -57,6 +68,9 @@ window.__ModuleLoader__.load({
       settingsDesc: '会话和工作区共用同一套标签。右键会话或工作区即可打标签；标题颜色就是标签颜色。过滤时，标在工作区上的标签会带出整组会话，标在会话上的只带出该会话。',
       empty: '还没有标签，先创建一个。',
       failed: '标签操作失败',
+      limit: '最多支持 10 个标签',
+      noColors: '没有可用的颜色了',
+      cycleColor: '切换颜色',
       filterAll: '全部',
       filterTitle: '按标签过滤会话',
       filterStatus: '过滤：{label}',
@@ -80,6 +94,9 @@ window.__ModuleLoader__.load({
       settingsDesc: 'Sessions and workspaces share this tag set. Right-click either to set a tag; the title uses the tag color. Filtering by a workspace tag includes its whole group; a session tag only includes that session.',
       empty: 'No tags yet — create one below.',
       failed: 'Tag update failed',
+      limit: 'At most 10 tags are supported',
+      noColors: 'No colors left',
+      cycleColor: 'Change color',
       filterAll: 'All',
       filterTitle: 'Filter sessions by tag',
       filterStatus: 'Filter: {label}',
@@ -97,6 +114,11 @@ window.__ModuleLoader__.load({
 .dsh-tag-swatches{display:flex;align-items:center;gap:5px}
 .dsh-tag-swatch{width:16px;height:16px;padding:0;border:2px solid transparent;border-radius:50%;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
 .dsh-tag-swatch.is-current{border-color:var(--dsw-alias-label-primary,#111);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 0 0 1px var(--dsw-alias-label-primary,#111)}
+.dsh-tag-swatch.is-used{opacity:.22;cursor:not-allowed}
+.dsh-tag-dotButton{display:flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:0;border-radius:50%;background:transparent;cursor:pointer}
+.dsh-tag-dotButton:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.12))}
+.dsh-tag-dotButton:disabled{cursor:default;opacity:.5}
+.dsh-tag-hint{margin:0;padding:0 2px;font-size:12px;color:var(--dsw-alias-label-tertiary,#888)}
 .dsh-tag-primary{height:32px;padding:0 14px;border:0;border-radius:8px;background:var(--dsw-alias-state-business-primary,#3d7bfd);color:#fff;font:inherit;font-size:13px;cursor:pointer}
 .dsh-tag-primary:disabled{opacity:.45;cursor:default}
 .dsh-tag-secondary{height:32px;padding:0 12px;border:1px solid var(--dsw-alias-border-l4,rgba(127,127,127,.3));border-radius:8px;background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer}
@@ -827,10 +849,14 @@ window.__ModuleLoader__.load({
         }
 
         // ── Settings ───────────────────────────────────────────────────────────
-        function TagRow({ tag }) {
+        function TagRow({ tag, tags }) {
           const [text, setText] = React.useState(tag.label)
           const [busy, setBusy] = React.useState(false)
           const [error, setError] = React.useState(null)
+          const usedByOthers = new Set(
+            tags.filter(item => item.id !== tag.id).map(item => item.color),
+          )
+          const nextColor = SWATCHES.find(name => name !== tag.color && !usedByOthers.has(name))
 
           React.useEffect(() => {
             setText(tag.label)
@@ -856,6 +882,10 @@ window.__ModuleLoader__.load({
           const recolor = (color) => {
             void run(() => request('PATCH', `/${encodeURIComponent(tag.id)}`, { color }))
           }
+          const cycleColor = () => {
+            if (nextColor === undefined) return
+            recolor(nextColor)
+          }
           const remove = () => {
             if (!window.confirm(t('confirmDelete', { label: tag.label }))) return
             void run(() => request('DELETE', `/${encodeURIComponent(tag.id)}`))
@@ -863,7 +893,18 @@ window.__ModuleLoader__.load({
 
           return h('div', { className: 'dsh-tag-rowWrap' },
             h('div', { className: 'dsh-tag-row' },
-              h('span', { className: 'dsh-tag-dot', style: { background: swatch(tag.color) }, 'aria-hidden': 'true' }),
+              h('button', {
+                type: 'button',
+                className: 'dsh-tag-dotButton',
+                disabled: busy || nextColor === undefined,
+                'aria-label': t('cycleColor'),
+                title: t('cycleColor'),
+                onClick: cycleColor,
+              }, h('span', {
+                className: 'dsh-tag-dot',
+                style: { background: swatch(tag.color) },
+                'aria-hidden': 'true',
+              })),
               h('input', {
                 className: 'dsh-tag-input',
                 value: text,
@@ -881,11 +922,13 @@ window.__ModuleLoader__.load({
               h('div', { className: 'dsh-tag-swatches' }, SWATCHES.map(name => h('button', {
                 key: name,
                 type: 'button',
-                className: 'dsh-tag-swatch' + (tag.color === name ? ' is-current' : ''),
+                className: 'dsh-tag-swatch'
+                  + (tag.color === name ? ' is-current' : '')
+                  + (usedByOthers.has(name) && tag.color !== name ? ' is-used' : ''),
                 style: { background: swatch(name) },
                 'aria-label': name,
                 title: name,
-                disabled: busy,
+                disabled: busy || (usedByOthers.has(name) && tag.color !== name),
                 onClick: () => recolor(name),
               }))),
               h('button', {
@@ -917,17 +960,25 @@ window.__ModuleLoader__.load({
           const [color, setColor] = React.useState('green')
           const [busy, setBusy] = React.useState(false)
           const [error, setError] = React.useState(null)
+          const usedColors = new Set(snapshot.tags.map(tag => tag.color))
+          const availableColors = SWATCHES.filter(name => !usedColors.has(name))
+          const atLimit = snapshot.tags.length >= 10
+          const selectedColor = availableColors.includes(color) ? color : availableColors[0] ?? ''
 
           React.useEffect(() => {
             void refresh()
           }, [])
 
+          React.useEffect(() => {
+            if (!availableColors.includes(color)) setColor(availableColors[0] ?? '')
+          }, [snapshot.tags, color])
+
           const create = () => {
             const text = label.trim()
-            if (text.length === 0) return
+            if (text.length === 0 || atLimit || selectedColor.length === 0) return
             setBusy(true)
             setError(null)
-            void request('POST', '', { label: text, color })
+            void request('POST', '', { label: text, color: selectedColor })
               .then(() => setLabel(''))
               .catch((failure) => setError(failure instanceof Error ? failure.message : String(failure)))
               .finally(() => setBusy(false))
@@ -942,7 +993,7 @@ window.__ModuleLoader__.load({
             snapshot.tags.length === 0
               ? h('div', { className: 'dsh-tag-empty' }, t('empty'))
               : h('div', { className: 'dsh-tag-settingsList' },
-                snapshot.tags.map(tag => h(TagRow, { key: tag.id, tag }))),
+                snapshot.tags.map(tag => h(TagRow, { key: tag.id, tag, tags: snapshot.tags }))),
             h('div', { className: 'dsh-tag-create dsh-tag-settingsCreate' },
               h('span', { className: 'dsh-tag-addIcon', 'aria-hidden': 'true' }, h('svg', {
                 width: 15,
@@ -959,8 +1010,8 @@ window.__ModuleLoader__.load({
                 className: 'dsh-tag-input',
                 value: label,
                 maxLength: 48,
-                disabled: busy,
-                placeholder: t('newPlaceholder'),
+                disabled: busy || atLimit,
+                placeholder: atLimit ? t('limit') : t('newPlaceholder'),
                 'aria-label': t('newPlaceholder'),
                 onChange: (event) => setLabel(event.target.value),
                 onKeyDown: (event) => {
@@ -969,10 +1020,10 @@ window.__ModuleLoader__.load({
                   create()
                 },
               }),
-              h('div', { className: 'dsh-tag-swatches' }, SWATCHES.map(name => h('button', {
+              h('div', { className: 'dsh-tag-swatches' }, availableColors.map(name => h('button', {
                 key: name,
                 type: 'button',
-                className: 'dsh-tag-swatch' + (color === name ? ' is-current' : ''),
+                className: 'dsh-tag-swatch' + (selectedColor === name ? ' is-current' : ''),
                 style: { background: swatch(name) },
                 'aria-label': name,
                 title: name,
@@ -982,9 +1033,14 @@ window.__ModuleLoader__.load({
               h('button', {
                 type: 'button',
                 className: 'dsh-tag-primary',
-                disabled: busy || label.trim().length === 0,
+                disabled: busy || atLimit || selectedColor.length === 0 || label.trim().length === 0,
                 onClick: create,
-              }, t('add'))))
+              }, t('add'))),
+            atLimit
+              ? h('p', { className: 'dsh-tag-hint' }, t('limit'))
+              : availableColors.length === 0
+                ? h('p', { className: 'dsh-tag-hint' }, t('noColors'))
+                : null)
         }
 
         function HoverTag({ sessionId }) {

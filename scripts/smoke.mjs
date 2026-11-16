@@ -109,6 +109,12 @@ try {
   }
 
   {
+    const response = await call(route, 'POST', '/tags', { label: '重复颜色', color: 'amber' })
+    assert.equal(response.status, 409, 'a color can only belong to one tag')
+    assert.equal(response.json.error.code, 'color-in-use')
+  }
+
+  {
     const response = await call(route, 'PUT', '/tags/sessions/s1', { tagId: 'design' })
     assert.equal(response.status, 200)
     assert.equal(response.json.snapshot.sessions.s1, 'design')
@@ -127,10 +133,10 @@ try {
   }
 
   {
-    const response = await call(route, 'PATCH', `/tags/${created.id}`, { label: '会议2', color: '#123456' })
+    const response = await call(route, 'PATCH', `/tags/${created.id}`, { label: '会议2', color: 'pink' })
     assert.equal(response.status, 200)
     assert.equal(response.json.tag.label, '会议2')
-    assert.equal(response.json.tag.color, '#123456')
+    assert.equal(response.json.tag.color, 'pink')
   }
 
   {

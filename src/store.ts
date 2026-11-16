@@ -10,7 +10,11 @@ import {
 } from './protocol.js'
 
 const RESERVED_IDS = new Set(['events', 'health', 'sessions', 'workspaces'])
-const NAMED_COLORS = new Set(['green', 'amber', 'blue', 'red', 'purple', 'gray'])
+const NAMED_COLORS = new Set([
+  'green', 'amber', 'blue', 'red', 'purple',
+  'gray', 'teal', 'pink', 'indigo', 'brown',
+])
+const MAX_TAGS = 10
 const STATE_VERSION = 1
 
 /** Business-oriented defaults; IDs stay stable so assignments survive renames. */
@@ -103,8 +107,14 @@ export function openTagStore(
   }
 
   const createTag = (rawLabel: unknown, rawColor: unknown): Tag => {
+    if (state.tags.length >= MAX_TAGS) {
+      throw new HttpError(409, 'tag-limit', `at most ${MAX_TAGS} tags are supported`)
+    }
     const label = normalizeLabel(rawLabel)
-    const color = normalizeColor(rawColor)
+    const color = requireColor(rawColor)
+    if (state.tags.some(tag => tag.color === color)) {
+      throw new HttpError(409, 'color-in-use', `color "${color}" is already used`)
+    }
     const id = newTagId(state.tags)
     const order = nextOrder(state.tags)
     const tag: PersistedTag = { id, label, color, order, createdAt: Date.now() }
@@ -116,10 +126,14 @@ export function openTagStore(
     const index = state.tags.findIndex(tag => tag.id === id)
     if (index === -1) throw new HttpError(404, 'tag-not-found', `no tag "${id}"`)
     const current = state.tags[index]!
+    const color = patch.color === undefined ? current.color : requireColor(patch.color)
+    if (color !== current.color && state.tags.some(tag => tag.id !== id && tag.color === color)) {
+      throw new HttpError(409, 'color-in-use', `color "${color}" is already used`)
+    }
     const next: PersistedTag = {
       ...current,
       ...(patch.label === undefined ? {} : { label: normalizeLabel(patch.label) }),
-      ...(patch.color === undefined ? {} : { color: normalizeColor(patch.color) }),
+      color,
       ...(patch.order === undefined ? {} : { order: normalizeOrder(patch.order) }),
     }
     const list = [...state.tags]
@@ -292,6 +306,16 @@ function normalizeColor(value: unknown): string {
   if (NAMED_COLORS.has(color)) return color
   if (/^#[0-9a-f]{6}$/.test(color)) return color
   return 'gray'
+}
+
+/** New and updated tags must use one of the ten preset colors. */
+function requireColor(value: unknown): string {
+  if (typeof value !== 'string') throw new HttpError(400, 'bad-color', 'color is required')
+  const color = value.trim().toLowerCase()
+  if (!NAMED_COLORS.has(color)) {
+    throw new HttpError(400, 'bad-color', `color must be one of: ${[...NAMED_COLORS].join(', ')}`)
+  }
+  return color
 }
 
 function normalizeOrder(value: unknown): number {
