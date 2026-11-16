@@ -79,12 +79,12 @@ The UI ships with English, 简体中文, 日本語, Español, Français, Deutsch
 
 ## Install troubleshooting
 
-If the plugin center says **"This package declares no bundle"**, pnpm installed the old `0.0.1` placeholder instead of `0.1.0`. pnpm restricts packages published in the last day, so `pnpm add dsh-tag` can resolve the placeholder.
+If the plugin center says **"This package declares no bundle"**, pnpm installed the old `0.0.1` placeholder instead of the current release. pnpm restricts packages published in the last day, so `pnpm add dsh-tag` can resolve the placeholder.
 
 Install the version explicitly:
 
 ```sh
-dsh plugin --profile web add dsh-tag@0.1.0
+dsh plugin --profile web add dsh-tag@0.1.1
 ```
 
 If the profile keeps the old entry, remove it from the profile directory first:

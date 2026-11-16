@@ -7,7 +7,7 @@ Repository-only notes for the `dsh-tag` release. The npm package ships `lib/`, `
 | Field | Value |
 |---|---|
 | npm name | `dsh-tag` |
-| Version | `0.1.0` |
+| Version | `0.1.1` |
 | `description` | Color tags for DSH sessions and workspaces: context-menu tags, colored titles, a sidebar filter bar, and 8 UI languages. |
 | Keywords | `dsh`, `dsh-plugin`, `deepseek-harness`, `plugin`, `tags`, `session`, `workspace`, `sidebar`, `filter` |
 | `dsh.bundle.patch` | `./cordis.patch.yml` |
@@ -25,7 +25,7 @@ Automatic: it scans the GitHub `dsh-plugin` topic every six hours. No submission
 - [x] `dsh-plugin` topic
 - [x] Repository description
 - [x] `dsh.bundle` in `package.json`
-- [x] npm package published
+- [ ] publish `0.1.1`
 - [ ] Wait for the topic sync, then check the Hub listing
 - [ ] Ask maintainers to upgrade the entry from unconfirmed to verified (optional issue)
 
@@ -48,7 +48,7 @@ A submission is **one YAML file** at `data/plugins/<owner>__<repo>.yml`. CI chec
 - [x] `dsh-plugin` topic
 - [x] Repository older than one day
 - [x] Entry prepared at [`awesome-dsh-plugin.yml`](awesome-dsh-plugin.yml)
-- [x] npm package published
+- [ ] publish `0.1.1`
 - [ ] Fork the list, add the file, open the PR
 
 The current contributing guide does not mention a star threshold. The old "star > 10" rule applied to the retired SHOWCASE.md flow.
@@ -67,3 +67,4 @@ Verify after release:
 ```sh
 npm view dsh-tag version description keywords --registry=https://registry.npmjs.org
 ```
+

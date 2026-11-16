@@ -76,6 +76,8 @@ window.__ModuleLoader__.load({
       filterTitle: '按标签过滤会话',
       filterEmpty: '没有带「{label}」标签的会话',
       filterWorkspaceEmpty: '「{label}」标在工作区上；这个工作区下暂无会话',
+      clearFilter: '清除过滤',
+      emptyHint: '换个标签，或清除过滤查看全部会话。',
       showFilter: '显示过滤条',
       showFilterDesc: '在工作区列表上方显示标签颜色过滤条。',
       showFilterFailed: '过滤条设置没有保存',
@@ -112,6 +114,8 @@ window.__ModuleLoader__.load({
       filterTitle: 'Filter sessions by tag',
       filterEmpty: 'No sessions tagged “{label}”',
       filterWorkspaceEmpty: '“{label}” is on a workspace; it holds no sessions yet',
+      clearFilter: 'Clear filter',
+      emptyHint: 'Try another tag, or clear the filter to see everything.',
       showFilter: 'Show filter bar',
       showFilterDesc: 'Show the tag colour filters above the workspace list.',
       showFilterFailed: 'The filter bar setting was not saved',
@@ -148,6 +152,8 @@ window.__ModuleLoader__.load({
       filterTitle: 'タグでセッションを絞り込む',
       filterEmpty: '「{label}」の付いたセッションはありません',
       filterWorkspaceEmpty: '「{label}」はこのワークスペースに付いていますが、セッションはまだありません',
+      clearFilter: 'フィルターを解除',
+      emptyHint: '別のタグを選ぶか、フィルターを解除するとすべて表示されます。',
       showFilter: 'フィルターバーを表示',
       showFilterDesc: 'ワークスペース一覧の上にタグの色フィルターを表示します。',
       showFilterFailed: 'フィルター設定を保存できませんでした',
@@ -184,6 +190,8 @@ window.__ModuleLoader__.load({
       filterTitle: 'Filtrar sesiones por etiqueta',
       filterEmpty: 'Ninguna sesión tiene «{label}»',
       filterWorkspaceEmpty: '«{label}» está en este espacio de trabajo, pero aún no tiene sesiones',
+      clearFilter: 'Quitar filtro',
+      emptyHint: 'Prueba otra etiqueta o quita el filtro para verlo todo.',
       showFilter: 'Mostrar barra de filtros',
       showFilterDesc: 'Muestra los filtros de color sobre la lista de espacios de trabajo.',
       showFilterFailed: 'No se pudo guardar el ajuste de la barra de filtros',
@@ -220,6 +228,8 @@ window.__ModuleLoader__.load({
       filterTitle: 'Filtrer les sessions par étiquette',
       filterEmpty: 'Aucune session étiquetée « {label} »',
       filterWorkspaceEmpty: '« {label} » est sur cet espace de travail, mais il ne contient encore aucune session',
+      clearFilter: 'Retirer le filtre',
+      emptyHint: 'Essayez une autre étiquette ou retirez le filtre pour tout afficher.',
       showFilter: 'Afficher la barre de filtres',
       showFilterDesc: 'Affiche les filtres de couleur au-dessus de la liste des espaces de travail.',
       showFilterFailed: 'Le réglage de la barre de filtres n’a pas été enregistré',
@@ -256,6 +266,8 @@ window.__ModuleLoader__.load({
       filterTitle: 'Sitzungen nach Tag filtern',
       filterEmpty: 'Keine Sitzung mit dem Tag „{label}“',
       filterWorkspaceEmpty: '„{label}“ liegt auf diesem Workspace, der noch keine Sitzungen enthält',
+      clearFilter: 'Filter entfernen',
+      emptyHint: 'Wähle einen anderen Tag oder entferne den Filter, um alles zu sehen.',
       showFilter: 'Filterleiste anzeigen',
       showFilterDesc: 'Zeigt die Tag-Farbfilter über der Workspace-Liste.',
       showFilterFailed: 'Die Filterleisten-Einstellung wurde nicht gespeichert',
@@ -292,6 +304,8 @@ window.__ModuleLoader__.load({
       filterTitle: 'Фильтровать сессии по метке',
       filterEmpty: 'Нет сессий с меткой «{label}»',
       filterWorkspaceEmpty: 'На этом рабочем пространстве стоит «{label}», но сессий пока нет',
+      clearFilter: 'Снять фильтр',
+      emptyHint: 'Выберите другую метку или снимите фильтр, чтобы увидеть всё.',
       showFilter: 'Показывать панель фильтров',
       showFilterDesc: 'Показывает цветные фильтры меток над списком рабочих пространств.',
       showFilterFailed: 'Настройка панели фильтров не сохранилась',
@@ -328,6 +342,8 @@ window.__ModuleLoader__.load({
       filterTitle: 'Filtrar sessões por etiqueta',
       filterEmpty: 'Nenhuma sessão com “{label}”',
       filterWorkspaceEmpty: '“{label}” está neste espaço de trabalho, que ainda não tem sessões',
+      clearFilter: 'Remover filtro',
+      emptyHint: 'Tente outra etiqueta ou remova o filtro para ver tudo.',
       showFilter: 'Mostrar barra de filtros',
       showFilterDesc: 'Mostra os filtros de cor acima da lista de espaços de trabalho.',
       showFilterFailed: 'A configuração da barra de filtros não foi salva',
@@ -432,7 +448,13 @@ body[data-ds-dark-theme]{
 .dsh-tag-filterBlock.is-active::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;line-height:1;text-shadow:0 1px 2px rgba(0,0,0,.5)}
 .dsh-tag-menuLabel{display:flex;align-items:center;justify-content:space-between;gap:20px;width:100%}
 .dsh-tag-menuCheck{flex:none;color:var(--dsw-alias-state-business-primary,#3d7bfd);font-weight:600}
-.dsh-tag-filterEmpty{padding:2px var(--dsh-sidebar-row-padding,8px) 8px;font-size:12px;line-height:17px;color:var(--dsw-alias-label-tertiary,#888)}
+.dsh-tag-filterEmpty{box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:clamp(220px,52vh,460px);padding:24px var(--dsh-sidebar-row-padding,8px) 40px;text-align:center}
+.dsh-tag-filterEmpty[hidden]{display:none}
+.dsh-tag-emptyIcon{display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.1));color:var(--dsw-alias-label-tertiary,#888)}
+.dsh-tag-emptyTitle{margin:0;font-size:13px;line-height:20px;color:var(--dsw-alias-label-secondary,var(--dsw-alias-label-primary,#111))}
+.dsh-tag-emptyHint{margin:0;font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary,#888)}
+.dsh-tag-emptyAction{margin-top:2px;padding:3px 10px;border:0;border-radius:6px;background:transparent;color:var(--dsw-alias-state-business-primary,#3d7bfd);font:inherit;font-size:12px;line-height:18px;cursor:pointer}
+.dsh-tag-emptyAction:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.08))}
 `
 
     /** Hex from the palette, with alpha for the card outline. */
@@ -602,6 +624,7 @@ body[data-ds-dark-theme]{
         let filterWrap = null
         let filterBar = null
         let filterEmpty = null
+        let filterEmptyTitle = null
         let filterObserver = null
         let filterTimer = 0
         let filterSignature = ''
@@ -686,6 +709,25 @@ body[data-ds-dark-theme]{
           filterEmpty = document.createElement('div')
           filterEmpty.className = 'dsh-tag-filterEmpty'
           filterEmpty.hidden = true
+          const icon = document.createElement('span')
+          icon.className = 'dsh-tag-emptyIcon'
+          icon.setAttribute('aria-hidden', 'true')
+          icon.innerHTML = '<svg width="18" height="18" viewBox="0 0 16 16">' +
+            '<path d="M2.5 2.5h6.1l4.9 4.9a1.2 1.2 0 0 1 0 1.7l-3.2 3.2a1.2 1.2 0 0 1-1.7 0L2.5 8.6V2.5z" ' +
+            'fill="none" stroke="currentColor" stroke-width="1.2"/>' +
+            '<circle cx="5.2" cy="5.2" r="1" fill="currentColor"/></svg>'
+          filterEmptyTitle = document.createElement('p')
+          filterEmptyTitle.className = 'dsh-tag-emptyTitle'
+          filterEmptyTitle.setAttribute('aria-live', 'polite')
+          const hint = document.createElement('p')
+          hint.className = 'dsh-tag-emptyHint'
+          hint.textContent = t('emptyHint')
+          const action = document.createElement('button')
+          action.type = 'button'
+          action.className = 'dsh-tag-emptyAction'
+          action.textContent = t('clearFilter')
+          action.addEventListener('click', clearFilter)
+          filterEmpty.append(icon, filterEmptyTitle, hint, action)
           filterWrap.append(filterBar, filterEmpty)
           return filterWrap
         }
@@ -975,7 +1017,7 @@ body[data-ds-dark-theme]{
             else if (renderedMatches(activeTag.id) === 0) text = t('filterEmpty', { label: activeTag.label })
           }
           if (text !== null) {
-            if (filterEmpty.textContent !== text) filterEmpty.textContent = text
+            if (filterEmptyTitle !== null && filterEmptyTitle.textContent !== text) filterEmptyTitle.textContent = text
             if (filterEmpty.hidden) filterEmpty.hidden = false
           } else if (!filterEmpty.hidden) {
             filterEmpty.hidden = true
@@ -1538,6 +1580,7 @@ body[data-ds-dark-theme]{
               filterWrap = null
               filterBar = null
               filterEmpty = null
+              filterEmptyTitle = null
             }
             filterStyle.textContent = ''
             if (source !== undefined) {
