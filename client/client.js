@@ -671,9 +671,10 @@ window.__ModuleLoader__.load({
           expandMatches(groups)
           revealMatches(groups)
           const rules = ['[data-row-key^="session:"]{display:none!important}']
-          // A revealed group shows a "collapse sessions" control that a filter
-          // has no use for; hidden groups lose their whole group footprint.
-          rules.push('[data-row-key^="overflow:"][aria-expanded="true"]{display:none!important}')
+          // While filtering, every non-matching Session row is hidden, so a
+          // group's "show more" control must go too: its count describes the
+          // unfiltered list and clicking it only makes the result jump around.
+          rules.push('[data-row-key^="overflow:"]{display:none!important}')
           const show = new Set()
           for (const [sessionId, owner] of Object.entries(state.sessions)) {
             if (owner === activeTag.id) show.add(sessionId)
