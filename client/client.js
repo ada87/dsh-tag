@@ -74,9 +74,6 @@ window.__ModuleLoader__.load({
       color: '颜色',
       filterAll: '全部',
       filterTitle: '按标签过滤会话',
-      filterStatus: '过滤：{label}',
-      filterStatusCount: '过滤：{label} · {count}',
-      filterClear: '清除过滤',
       filterEmpty: '没有带「{label}」标签的会话',
       filterWorkspaceEmpty: '「{label}」标在工作区上；这个工作区下暂无会话',
     }
@@ -101,9 +98,6 @@ window.__ModuleLoader__.load({
       color: 'Color',
       filterAll: 'All',
       filterTitle: 'Filter sessions by tag',
-      filterStatus: 'Filter: {label}',
-      filterStatusCount: 'Filter: {label} · {count}',
-      filterClear: 'Clear filter',
       filterEmpty: 'No sessions tagged “{label}”',
       filterWorkspaceEmpty: '“{label}” is on a workspace; it holds no sessions yet',
     }
@@ -155,13 +149,14 @@ window.__ModuleLoader__.load({
 .dsh-tag-filterWrap{flex:none;box-sizing:border-box;width:100%}
 .dsh-tag-filter{display:flex;align-items:center;gap:6px;flex:none;box-sizing:border-box;width:100%;padding:2px var(--dsh-sidebar-row-padding,8px) 6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
 .dsh-tag-filter::-webkit-scrollbar{display:none}
-.dsh-tag-filterAll{height:22px;padding:0 9px;border:1px solid var(--dsw-alias-border-l4,rgba(127,127,127,.28));border-radius:999px;background:transparent;color:var(--dsw-alias-label-tertiary,#888);font:inherit;font-size:12px;line-height:1;cursor:pointer;flex:none;white-space:nowrap}
-.dsh-tag-filterAll.is-active{color:var(--dsw-alias-label-primary,#111);border-color:var(--dsw-alias-label-caption,#999);background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.12))}
-.dsh-tag-filterBlock{position:relative;width:20px;height:20px;padding:0;border:2px solid transparent;border-radius:6px;flex:none;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
-.dsh-tag-filterBlock.is-active{border-color:var(--dsw-alias-label-primary,#111);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 0 0 1px var(--dsw-alias-label-primary,#111)}
-.dsh-tag-filterBlock.is-active::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;font-weight:700;line-height:1;text-shadow:0 1px 2px rgba(0,0,0,.5)}
-.dsh-tag-filterStatus{height:22px;padding:0 2px;border:0;background:transparent;color:var(--dsw-alias-label-tertiary,#888);font:inherit;font-size:12px;line-height:1;cursor:pointer;flex:none;white-space:nowrap}
-.dsh-tag-filterStatus:hover{color:var(--dsw-alias-label-primary,#111)}
+.dsh-tag-filterAll{position:relative;width:22px;height:22px;padding:0;border:0;border-radius:50%;flex:none;cursor:pointer;background:conic-gradient(#22C55E 0 36deg,#F59E0B 36deg 72deg,#3B82F6 72deg 108deg,#EF4444 108deg 144deg,#8B5CF6 144deg 180deg,#6B7280 180deg 216deg,#14B8A6 216deg 252deg,#EC4899 252deg 288deg,#6366F1 288deg 324deg,#A2845E 324deg 360deg);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);transition:transform .15s ease,box-shadow .15s ease}
+.dsh-tag-filterAll::after{content:'';position:absolute;inset:5px;border-radius:50%;background:var(--dsw-alias-surface-primary,#fff)}
+.dsh-tag-filterAll:hover{transform:scale(1.08)}
+.dsh-tag-filterAll.is-active{transform:scale(1.08);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 2px 8px rgba(0,0,0,.2)}
+.dsh-tag-filterBlock{position:relative;width:22px;height:22px;padding:0;border:0;border-radius:7px;flex:none;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);background-image:radial-gradient(circle at 32% 26%,rgba(255,255,255,.45),rgba(255,255,255,0) 48%);transition:transform .15s ease,box-shadow .15s ease}
+.dsh-tag-filterBlock:hover{transform:scale(1.08)}
+.dsh-tag-filterBlock.is-active{transform:scale(1.1);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 2px 8px rgba(0,0,0,.28)}
+.dsh-tag-filterBlock.is-active::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;line-height:1;text-shadow:0 1px 2px rgba(0,0,0,.5)}
 .dsh-tag-filterEmpty{padding:2px var(--dsh-sidebar-row-padding,8px) 8px;font-size:12px;line-height:17px;color:var(--dsw-alias-label-tertiary,#888)}
 `
 
@@ -301,7 +296,6 @@ window.__ModuleLoader__.load({
         let filterWrap = null
         let filterBar = null
         let filterEmpty = null
-        let filterStatus = null
         let filterObserver = null
         let filterTimer = 0
         let filterSignature = ''
@@ -404,7 +398,6 @@ window.__ModuleLoader__.load({
               filterTagId = null
               writeFilter()
             }
-            filterStatus = null
             filterEmpty.hidden = true
             return
           }
@@ -419,38 +412,25 @@ window.__ModuleLoader__.load({
           const signature = JSON.stringify([filterTagId, tags.map(tag => [tag.id, tag.label, tag.color, tag.order])])
           if (signature === filterSignature) return
           filterSignature = signature
-          const activeTag = filterTagId === null ? undefined : tags.find(tag => tag.id === filterTagId)
           const all = document.createElement('button')
           all.type = 'button'
           all.className = 'dsh-tag-filterAll' + (filterTagId === null ? ' is-active' : '')
-          all.textContent = t('filterAll')
           all.title = t('filterAll')
+          all.setAttribute('aria-label', t('filterAll'))
           all.setAttribute('aria-pressed', String(filterTagId === null))
           all.addEventListener('click', clearFilter)
           const blocks = tags.map(tag => {
             const block = document.createElement('button')
             block.type = 'button'
             block.className = 'dsh-tag-filterBlock' + (filterTagId === tag.id ? ' is-active' : '')
-            block.style.background = swatch(tag.color)
+            block.style.backgroundColor = swatch(tag.color)
             block.title = tag.label
             block.setAttribute('aria-label', tag.label)
             block.setAttribute('aria-pressed', String(filterTagId === tag.id))
             block.addEventListener('click', () => selectFilter(tag.id))
             return block
           })
-          filterStatus = activeTag === undefined
-            ? null
-            : (() => {
-              const button = document.createElement('button')
-              button.type = 'button'
-              button.className = 'dsh-tag-filterStatus'
-              button.textContent = t('filterStatus', { label: activeTag.label })
-              button.title = t('filterClear')
-              button.setAttribute('aria-label', t('filterClear'))
-              button.addEventListener('click', clearFilter)
-              return button
-            })()
-          withoutFilterObserver(() => filterBar.replaceChildren(all, ...blocks, ...(filterStatus === null ? [] : [filterStatus])))
+          withoutFilterObserver(() => filterBar.replaceChildren(all, ...blocks))
         }
         /** The session list's scroll container and the node to insert the bar before. */
         function filterAnchor() {
@@ -657,13 +637,6 @@ window.__ModuleLoader__.load({
           }
         }
 
-        function updateFilterStatus(activeTag, groups) {
-          if (filterStatus === null) return
-          let text
-          if (groups === null || groups.total === 0) text = t('filterStatus', { label: activeTag.label })
-          else text = t('filterStatusCount', { label: activeTag.label, count: groups.total })
-          if (filterStatus.textContent !== text) filterStatus.textContent = text
-        }
         function updateFilterEmpty(activeTag, groups) {
           if (filterEmpty === null) return
           let text = null
@@ -735,7 +708,6 @@ window.__ModuleLoader__.load({
             else badge('workspace:', groups.ungrouped)
           }
           filterStyle.textContent = rules.join('\n')
-          updateFilterStatus(activeTag, groups)
           updateFilterEmpty(activeTag, groups)
         }
         /** Collapse one burst of React mutations into one mount + filter pass. */
@@ -1199,7 +1171,6 @@ window.__ModuleLoader__.load({
               filterWrap = null
               filterBar = null
               filterEmpty = null
-              filterStatus = null
             }
             filterStyle.textContent = ''
             if (source !== undefined) {
