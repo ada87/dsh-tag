@@ -10,7 +10,7 @@ Color tags for DeepSeek Harness sessions and workspaces: one tag per row, the ti
 
 ## Install
 
-Plugins → Add plugin → `dsh-tag`
+Plugins → Add plugin → `dsh-tag@0.1.0`
 
 ![Add plugin](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/install.png)
 

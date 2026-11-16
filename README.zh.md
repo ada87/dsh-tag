@@ -10,7 +10,7 @@
 
 ## 安装
 
-插件 → 添加插件 → `dsh-tag`
+插件 → 添加插件 → `dsh-tag@0.1.0`
 
 ![添加插件](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/install.png)
 
