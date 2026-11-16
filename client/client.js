@@ -128,17 +128,19 @@ window.__ModuleLoader__.load({
 .dsh-tag-delete{display:flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border:0;border-radius:6px;background:transparent;color:var(--dsw-alias-label-tertiary,#888);cursor:pointer}
 .dsh-tag-delete:hover{background:var(--dsw-alias-state-error-primary,#e5484d);color:#fff}
 .dsh-tag-delete:disabled{opacity:.45;cursor:default}
-.dsh-tag-create{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:44px;padding:8px 12px;border:1px dashed var(--dsw-alias-border-l3,rgba(127,127,127,.32));border-radius:12px;background:transparent}
-.dsh-tag-create .dsh-tag-input{flex:1;min-width:140px;border:0;background:transparent}
-.dsh-tag-addIcon{display:flex;align-items:center;color:var(--dsw-alias-label-tertiary,#888)}
+.dsh-tag-create{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:44px;padding:8px 14px;border:1px dashed var(--dsw-alias-border-l3,rgba(127,127,127,.32));border-radius:12px;background:transparent}
+.dsh-tag-create .dsh-tag-input{flex:1;min-width:140px;border:0;background:transparent;outline:none}
+.dsh-tag-create .dsh-tag-input:focus{box-shadow:none}
+.dsh-tag-create:focus-within{border-color:var(--dsh-tag-accent,var(--dsw-alias-border-l3,rgba(127,127,127,.32)))}
 .dsh-tag-settings{display:flex;flex-direction:column;gap:14px;width:100%}
 .dsh-tag-settingsHead{display:flex;flex-direction:column;gap:4px}
 .dsh-tag-settingsTitle{margin:0;font-size:16px;line-height:24px;font-weight:500;color:var(--dsw-alias-label-primary,#111)}
 .dsh-tag-settingsList{display:flex;flex-direction:column;gap:8px;margin-top:12px;padding:0;border-radius:0;background:transparent}
 .dsh-tag-rowWrap{display:flex;flex-direction:column;padding:0 14px;border:0.5px solid var(--dsw-alias-settings-card-stroke,rgba(127,127,127,.24));border-radius:12px;background:var(--dsw-alias-settings-card-fill,transparent)}
 .dsh-tag-row{display:flex;align-items:center;gap:10px;min-height:44px;padding:2px 0;border-bottom:0}
-.dsh-tag-row .dsh-tag-input{flex:1;min-width:0;height:32px;padding:0 8px;border:0;border-radius:6px;background:transparent}
-.dsh-tag-row .dsh-tag-input:focus{background:var(--dsw-alias-surface-primary,#fff);box-shadow:0 0 0 1px var(--dsh-tag-accent,var(--dsw-alias-state-business-primary,#3d7bfd))}
+.dsh-tag-row .dsh-tag-input{flex:1;min-width:0;height:32px;padding:0 8px;border:0;border-radius:6px;background:transparent;outline:none}
+.dsh-tag-row .dsh-tag-input:focus{background:transparent;box-shadow:none}
+.dsh-tag-rowWrap:focus-within{border-color:var(--dsh-tag-accent,var(--dsw-alias-settings-card-stroke,rgba(127,127,127,.24)))}
 .dsh-tag-settingsCreate{padding-top:12px}
 .dsh-tag-empty{padding:10px 0;font-size:13px;color:var(--dsw-alias-label-tertiary,#888)}
 .dsh-tag-hover{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;line-height:17px;color:#cfd3d6}
@@ -935,7 +937,10 @@ window.__ModuleLoader__.load({
             void run(() => request('DELETE', `/${encodeURIComponent(tag.id)}`))
           }
 
-          return h('div', { className: 'dsh-tag-rowWrap' },
+          return h('div', {
+            className: 'dsh-tag-rowWrap',
+            style: { '--dsh-tag-accent': swatch(tag.color) },
+          },
             h('div', { className: 'dsh-tag-row' },
               h(ColorPicker, {
                 value: tag.color,
@@ -949,10 +954,7 @@ window.__ModuleLoader__.load({
                 value: text,
                 maxLength: 48,
                 disabled: busy,
-                style: {
-                  color: textColor(tag.color),
-                  '--dsh-tag-accent': swatch(tag.color),
-                },
+                style: { color: textColor(tag.color) },
                 'aria-label': tag.label,
                 onChange: (event) => setText(event.target.value),
                 onBlur: save,
@@ -1024,26 +1026,24 @@ window.__ModuleLoader__.load({
               ? h('div', { className: 'dsh-tag-empty' }, t('empty'))
               : h('div', { className: 'dsh-tag-settingsList' },
                 snapshot.tags.map(tag => h(TagRow, { key: tag.id, tag, tags: snapshot.tags }))),
-            h('div', { className: 'dsh-tag-create dsh-tag-settingsCreate' },
-              h('span', { className: 'dsh-tag-addIcon', 'aria-hidden': 'true' }, h('svg', {
-                width: 15,
-                height: 15,
-                viewBox: '0 0 16 16',
-              }, h('path', {
-                d: 'M8 3v10M3 8h10',
-                fill: 'none',
-                stroke: 'currentColor',
-                strokeWidth: 1.3,
-                strokeLinecap: 'round',
-              }))),
+            h('div', {
+              className: 'dsh-tag-create dsh-tag-settingsCreate',
+              style: selectedColor.length > 0 ? { '--dsh-tag-accent': swatch(selectedColor) } : undefined,
+            },
+              h(ColorPicker, {
+                value: selectedColor,
+                options: availableColors,
+                disabled: busy || atLimit,
+                align: 'left',
+                onChange: setColor,
+                label: t('color'),
+              }),
               h('input', {
                 className: 'dsh-tag-input',
                 value: label,
                 maxLength: 48,
                 disabled: busy || atLimit,
-                style: label.trim().length > 0
-                  ? { color: textColor(selectedColor), '--dsh-tag-accent': swatch(selectedColor) }
-                  : selectedColor.length > 0 ? { '--dsh-tag-accent': swatch(selectedColor) } : undefined,
+                style: label.trim().length > 0 ? { color: textColor(selectedColor) } : undefined,
                 placeholder: atLimit ? t('limit') : t('newPlaceholder'),
                 'aria-label': t('newPlaceholder'),
                 onChange: (event) => setLabel(event.target.value),
@@ -1052,14 +1052,6 @@ window.__ModuleLoader__.load({
                   event.preventDefault()
                   create()
                 },
-              }),
-              h(ColorPicker, {
-                value: selectedColor,
-                options: availableColors,
-                disabled: busy || atLimit,
-                align: 'right',
-                onChange: setColor,
-                label: t('color'),
               }),
               h('button', {
                 type: 'button',
