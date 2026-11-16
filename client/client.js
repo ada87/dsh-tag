@@ -32,26 +32,26 @@ window.__ModuleLoader__.load({
       amber: '#F59E0B',
       blue: '#3B82F6',
       red: '#EF4444',
-      purple: '#8B5CF6',
+      purple: '#A855F7',
       gray: '#6B7280',
-      teal: '#14B8A6',
+      teal: '#06B6D4',
       pink: '#EC4899',
-      indigo: '#6366F1',
-      brown: '#A2845E',
+      indigo: '#4F46E5',
+      brown: '#8D5B3E',
     }
 
-    /** Theme-aware colors for title text. */
+    /** Title colors resolve through per-theme variables defined in CSS. */
     const PALETTE = {
-      green: 'var(--dsw-alias-state-success-primary)',
-      amber: 'var(--dsw-alias-state-warn-primary)',
-      blue: 'var(--dsw-alias-state-business-primary)',
-      red: 'var(--dsw-alias-state-error-primary)',
-      purple: '#8B5CF6',
-      gray: 'var(--dsw-alias-label-caption)',
-      teal: '#14B8A6',
-      pink: '#EC4899',
-      indigo: '#6366F1',
-      brown: '#A2845E',
+      green: 'var(--dsh-tag-text-green)',
+      amber: 'var(--dsh-tag-text-amber)',
+      blue: 'var(--dsh-tag-text-blue)',
+      red: 'var(--dsh-tag-text-red)',
+      purple: 'var(--dsh-tag-text-purple)',
+      gray: 'var(--dsh-tag-text-gray)',
+      teal: 'var(--dsh-tag-text-teal)',
+      pink: 'var(--dsh-tag-text-pink)',
+      indigo: 'var(--dsh-tag-text-indigo)',
+      brown: 'var(--dsh-tag-text-brown)',
     }
 
     const zh = {
@@ -101,6 +101,33 @@ window.__ModuleLoader__.load({
     }
 
     const CSS = `
+/* Title text needs its own pairs: the shared state-*-primary tokens keep a
+   500-level fill color in both themes, which is too light on white and too
+   dim on the dark surface. Each pair clears 4.8:1 against its own background. */
+:root{
+  --dsh-tag-text-green:#15803D;
+  --dsh-tag-text-amber:#B45309;
+  --dsh-tag-text-blue:#1D4ED8;
+  --dsh-tag-text-red:#DC2626;
+  --dsh-tag-text-purple:#7C3AED;
+  --dsh-tag-text-gray:#4B5563;
+  --dsh-tag-text-teal:#0F766E;
+  --dsh-tag-text-pink:#BE185D;
+  --dsh-tag-text-indigo:#4338CA;
+  --dsh-tag-text-brown:#7C4A21;
+}
+body[data-ds-dark-theme]{
+  --dsh-tag-text-green:#4ADE80;
+  --dsh-tag-text-amber:#FBBF24;
+  --dsh-tag-text-blue:#7AA9FF;
+  --dsh-tag-text-red:#F87171;
+  --dsh-tag-text-purple:#A78BFA;
+  --dsh-tag-text-gray:#9CA3AF;
+  --dsh-tag-text-teal:#2DD4BF;
+  --dsh-tag-text-pink:#F472B6;
+  --dsh-tag-text-indigo:#818CF8;
+  --dsh-tag-text-brown:#C9A57A;
+}
 .dsh-tag-error{margin:8px 0;font-size:12px;line-height:17px;color:var(--dsw-alias-state-error-primary,#e5484d)}
 .dsh-tag-dot{flex:none;width:9px;height:9px;border-radius:50%;display:inline-block}
 .dsh-tag-input{flex:1;min-width:120px;box-sizing:border-box;height:34px;padding:0 10px;border-radius:8px;border:1px solid var(--dsw-alias-border-l4,rgba(127,127,127,.3));background:var(--dsw-alias-button-elevated-fill,rgba(127,127,127,.06));color:inherit;font:inherit;outline:none}
@@ -147,7 +174,7 @@ window.__ModuleLoader__.load({
 .dsh-tag-filterWrap{flex:none;box-sizing:border-box;width:100%}
 .dsh-tag-filter{display:flex;align-items:center;gap:6px;flex:none;box-sizing:border-box;width:100%;padding:2px var(--dsh-sidebar-row-padding,8px) 6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
 .dsh-tag-filter::-webkit-scrollbar{display:none}
-.dsh-tag-filterAll{position:relative;width:20px;height:20px;padding:0;border:0;border-radius:50%;flex:none;cursor:pointer;background:conic-gradient(#22C55E 0 36deg,#F59E0B 36deg 72deg,#3B82F6 72deg 108deg,#EF4444 108deg 144deg,#8B5CF6 144deg 180deg,#6B7280 180deg 216deg,#14B8A6 216deg 252deg,#EC4899 252deg 288deg,#6366F1 288deg 324deg,#A2845E 324deg 360deg);opacity:.55;transition:opacity .12s ease}
+.dsh-tag-filterAll{position:relative;width:20px;height:20px;padding:0;border:0;border-radius:50%;flex:none;cursor:pointer;background:conic-gradient(#22C55E 0 36deg,#F59E0B 36deg 72deg,#3B82F6 72deg 108deg,#EF4444 108deg 144deg,#A855F7 144deg 180deg,#6B7280 180deg 216deg,#06B6D4 216deg 252deg,#EC4899 252deg 288deg,#4F46E5 288deg 324deg,#8D5B3E 324deg 360deg);opacity:.55;transition:opacity .12s ease}
 .dsh-tag-filterAll::after{content:'';position:absolute;inset:4px;border-radius:50%;background:var(--dsw-alias-surface-primary,#fff)}
 .dsh-tag-filterAll:hover{opacity:1}
 .dsh-tag-filterAll.is-active{opacity:1}
