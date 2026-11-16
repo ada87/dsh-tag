@@ -114,15 +114,16 @@ window.__ModuleLoader__.load({
 .dsh-tag-input{flex:1;min-width:120px;box-sizing:border-box;height:34px;padding:0 10px;border-radius:8px;border:1px solid var(--dsw-alias-border-l4,rgba(127,127,127,.3));background:var(--dsw-alias-button-elevated-fill,rgba(127,127,127,.06));color:inherit;font:inherit;outline:none}
 .dsh-tag-input:focus{border-color:var(--dsw-alias-state-business-primary,#3d7bfd)}
 .dsh-tag-swatches{display:flex;align-items:center;gap:5px}
-.dsh-tag-swatch{width:16px;height:16px;padding:0;border:2px solid transparent;border-radius:50%;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.dsh-tag-swatch{width:20px;height:20px;padding:0;border:2px solid transparent;border-radius:50%;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);background-image:radial-gradient(circle at 32% 26%,rgba(255,255,255,.5),rgba(255,255,255,0) 48%)}
 .dsh-tag-swatch.is-current{border-color:var(--dsw-alias-label-primary,#111);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 0 0 1px var(--dsw-alias-label-primary,#111)}
 .dsh-tag-swatch.is-used{opacity:.22;cursor:not-allowed}
 .dsh-tag-dotWrap{position:relative;display:flex;align-items:center;flex:none}
-.dsh-tag-pickerButton{display:flex;align-items:center;gap:3px;height:28px;padding:0 4px;border:0;border-radius:7px;background:transparent;cursor:pointer}
+.dsh-tag-pickerButton{display:flex;align-items:center;gap:5px;height:30px;padding:0 5px;border:0;border-radius:8px;background:transparent;cursor:pointer}
 .dsh-tag-pickerButton:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.12))}
 .dsh-tag-pickerButton:disabled{cursor:default;opacity:.45}
+.dsh-tag-pickerButton .dsh-tag-dot{width:22px;height:22px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1),0 0 0 2px var(--dsw-alias-surface-primary,#fff),0 1px 3px rgba(0,0,0,.18);background-image:radial-gradient(circle at 32% 26%,rgba(255,255,255,.55),rgba(255,255,255,0) 48%)}
 .dsh-tag-pickerChevron{color:var(--dsw-alias-label-tertiary,#888)}
-.dsh-tag-colorMenu{position:absolute;top:calc(100% + 4px);left:0;z-index:30;display:flex;align-items:center;gap:6px;padding:8px;border-radius:10px;background:var(--dsw-alias-surface-primary,#fff);border:1px solid var(--dsw-alias-border-l3,rgba(127,127,127,.22));box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.dsh-tag-colorMenu{position:absolute;top:calc(100% + 5px);left:0;z-index:30;display:flex;align-items:center;gap:7px;padding:9px;border-radius:12px;background:var(--dsw-alias-surface-primary,#fff);border:1px solid var(--dsw-alias-border-l3,rgba(127,127,127,.22));box-shadow:0 10px 28px rgba(0,0,0,.2)}
 .dsh-tag-colorMenu.is-right{left:auto;right:0}
 .dsh-tag-dotButton{display:flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:0;border-radius:50%;background:transparent;cursor:pointer}
 .dsh-tag-dotButton:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.12))}
@@ -886,11 +887,11 @@ window.__ModuleLoader__.load({
               'aria-expanded': open,
               onClick: () => setOpen(current => !current),
             },
-            h('span', { className: 'dsh-tag-dot', style: { background: swatch(value) }, 'aria-hidden': 'true' }),
+            h('span', { className: 'dsh-tag-dot', style: { backgroundColor: swatch(value) }, 'aria-hidden': 'true' }),
             h('svg', {
               className: 'dsh-tag-pickerChevron',
-              width: 9,
-              height: 9,
+              width: 10,
+              height: 10,
               viewBox: '0 0 10 10',
               'aria-hidden': true,
             }, h('path', {
@@ -909,7 +910,7 @@ window.__ModuleLoader__.load({
                 key: name,
                 type: 'button',
                 className: 'dsh-tag-swatch' + (value === name ? ' is-current' : ''),
-                style: { background: swatch(name) },
+                style: { backgroundColor: swatch(name) },
                 'aria-label': name,
                 title: name,
                 onClick: () => {
@@ -972,6 +973,7 @@ window.__ModuleLoader__.load({
                 value: text,
                 maxLength: 48,
                 disabled: busy,
+                style: { color: textColor(tag.color) },
                 'aria-label': tag.label,
                 onChange: (event) => setText(event.target.value),
                 onBlur: save,
@@ -1061,6 +1063,7 @@ window.__ModuleLoader__.load({
                 value: label,
                 maxLength: 48,
                 disabled: busy || atLimit,
+                style: label.trim().length > 0 ? { color: textColor(selectedColor) } : undefined,
                 placeholder: atLimit ? t('limit') : t('newPlaceholder'),
                 'aria-label': t('newPlaceholder'),
                 onChange: (event) => setLabel(event.target.value),
