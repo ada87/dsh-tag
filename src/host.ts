@@ -12,8 +12,6 @@ export interface HostRequest {
   headers: Record<string, string | string[] | undefined>
   socket?: { remoteAddress?: string; remotePort?: number }
   on(event: 'close' | 'aborted', listener: () => void): void
-  off?(event: 'close' | 'aborted', listener: () => void): void
-  resume?(): void
 }
 
 export interface HostResponse {
@@ -35,12 +33,8 @@ export interface WebRoute {
   handler: (req: HostRequest, res: HostResponse) => void | Promise<void>
 }
 
-export interface WebServerService {
+export interface WebService {
   register(route: WebRoute): () => void
-  readonly host?: string
-  readonly port?: number
-  readonly protocol?: 'http:' | 'https:'
-  getOrigin?(): string
 }
 
 export interface ConnectionService {
@@ -50,12 +44,12 @@ export interface ConnectionService {
   }
 }
 
-export interface WorkspaceRegistryService {
+export interface WorkspaceService {
   list?(): Array<{ id?: unknown; path?: unknown }>
 }
 
 export interface HostContext {
-  webServer?: WebServerService
+  webServer?: WebService
   effect(fn: () => void | (() => void), label?: string): unknown
   get(name: string): unknown
 }

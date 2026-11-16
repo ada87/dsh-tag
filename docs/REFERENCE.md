@@ -92,7 +92,7 @@ If the profile keeps the old entry, remove it from the profile directory first:
 ```sh
 cd ~/.dsh/profiles/web
 pnpm remove dsh-tag
-pnpm add dsh-tag@0.1.0
+pnpm add dsh-tag@0.1.1
 ```
 
 Then restart the profile.
@@ -101,7 +101,7 @@ Then restart the profile.
 
 ```sh
 npm install
-npm run build      # tsc + esbuild + client syntax check
+npm run build      # declarations + esbuild bundle + client syntax check
 npm run typecheck
 npm run test:host  # /tags smoke test against a temporary DSH_HOME
 ```
@@ -113,7 +113,12 @@ src/store.ts       JSON state, settings, default tags
 src/protocol.ts    wire contract
 client/client.js   browser half: coloring, menus, filter, settings, 8 dictionaries
 locale/*.json      plugin listing copy
+scripts/clean.mjs  removes lib/ before a build so stale files never ship
 ```
+
+`npm run build` emits declarations with `tsc` and bundles the runtime host
+modules with esbuild, so the package does not contain duplicate copies of
+`src/*.js`.
 
 Known limits:
 

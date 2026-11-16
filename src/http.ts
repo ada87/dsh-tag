@@ -1,22 +1,22 @@
 import { HttpError } from './errors.js'
 import type { ConnectionService, HostContext, HostRequest, HostResponse } from './host.js'
-import { MAX_BODY_BYTES } from './protocol.js'
+import { BODY_LIMIT } from './protocol.js'
 
-export function header(req: HostRequest, name: string): string | undefined {
+function header(req: HostRequest, name: string): string | undefined {
   const value = req.headers[name.toLowerCase()]
   if (Array.isArray(value)) return value[0]
   return value
 }
 
-export function clientAddress(req: HostRequest): string {
+function clientAddress(req: HostRequest): string {
   return (req.socket?.remoteAddress ?? '').replace(/^::ffff:/, '')
 }
 
-export function isLoopback(address: string): boolean {
+function isLoopback(address: string): boolean {
   return address === '127.0.0.1' || address === '::1' || address.startsWith('127.')
 }
 
-export function sameOrigin(origin: string, authority: string): boolean {
+function sameOrigin(origin: string, authority: string): boolean {
   try {
     return new URL(origin).host.toLowerCase() === authority.toLowerCase()
   } catch {
@@ -24,7 +24,14 @@ export function sameOrigin(origin: string, authority: string): boolean {
   }
 }
 
-export async function readJson(req: HostRequest, maxBytes = MAX_BODY_BYTES): Promise<unknown> {
+/** True when the request carries an Origin that matches its Host header. */
+function originOk(req: HostRequest): boolean {
+  const origin = header(req, 'origin')
+  if (origin === undefined) return false
+  return sameOrigin(origin, header(req, 'host') ?? '')
+}
+
+export async function readJson(req: HostRequest, maxBytes = BODY_LIMIT): Promise<unknown> {
   const stream = req as unknown as AsyncIterable<Buffer | string>
   if (typeof stream[Symbol.asyncIterator] !== 'function') return undefined
   const chunks: Buffer[] = []
@@ -55,12 +62,6 @@ export function sendJson(res: HostResponse, status: number, value: unknown): voi
   res.end(body)
 }
 
-export function sendNoContent(res: HostResponse, status = 204): void {
-  if (res.writableEnded) return
-  res.writeHead(status)
-  res.end()
-}
-
 export function startSse(res: HostResponse): void {
   res.statusCode = 200
   res.setHeader('Content-Type', 'text/event-stream; charset=utf-8')
@@ -77,13 +78,22 @@ export function sseSend(res: HostResponse, value: unknown): void {
 }
 
 /**
+ * Rejects a cross-origin browser request early, before any route logic runs.
+ * Requests without an Origin are allowed through to the auth check.
+ */
+export function checkOrigin(req: HostRequest): void {
+  const origin = header(req, 'origin')
+  if (origin !== undefined && !originOk(req)) {
+    throw new HttpError(403, 'origin-refused', 'cross-origin requests are not accepted')
+  }
+}
+
+/**
  * Reads are public like the reference plugin; mutations require a same-origin
  * browser request, loopback, or a dsh connection admitted by the Host.
  */
 export function isTrusted(ctx: HostContext, req: HostRequest): boolean {
-  const origin = header(req, 'origin')
-  const authority = header(req, 'host') ?? ''
-  if (origin !== undefined && sameOrigin(origin, authority)) return true
+  if (originOk(req)) return true
   if (isLoopback(clientAddress(req))) return true
   const connection = ctx.get('connection') as ConnectionService | undefined
   if (connection !== undefined && typeof connection.admit === 'function') {

@@ -3,8 +3,10 @@ import { build } from 'esbuild'
 
 /**
  * Bundle the host half into one ESM file. dsh packages stay external because
- * the Host owns their instances; zod is bundled so a linked checkout does not
- * need its own node_modules to run.
+ * the Host owns their instances.
+ *
+ * tsc only emits declarations: the runtime modules are combined here, so the
+ * package does not ship duplicate copies of src/*.js.
  */
 await build({
   entryPoints: ['src/index.ts'],
@@ -15,7 +17,7 @@ await build({
   target: 'node22',
   sourcemap: false,
   legalComments: 'none',
-  external: ['@deepseek-ai/*', 'zod'],
+  external: ['@deepseek-ai/*'],
   banner: {
     js: '// dsh-tag - bundled by esbuild; dsh services stay external.',
   },

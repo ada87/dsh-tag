@@ -22,38 +22,27 @@ window.__ModuleLoader__.load({
     const NS = 'dshTag'
     const API = '/tags'
     const EVENTS = '/tags/events'
-    const SWATCHES = [
-      'green', 'amber', 'blue', 'red', 'purple',
-      'gray', 'teal', 'pink', 'indigo', 'brown',
-    ]
+    const MAX_TAGS = 10
+    const HEX_COLOR = /^#[0-9a-f]{6}$/i
+    const TAG_PATH = 'M2.5 2.5h6.1l4.9 4.9a1.2 1.2 0 0 1 0 1.7l-3.2 3.2a1.2 1.2 0 0 1-1.7 0L2.5 8.6V2.5z'
 
-    /** Concrete colors for menu dots and settings swatches. */
-    const HEX = {
-      green: '#22C55E',
-      amber: '#F59E0B',
-      blue: '#3B82F6',
-      red: '#EF4444',
-      purple: '#A855F7',
-      gray: '#6B7280',
-      teal: '#06B6D4',
-      pink: '#EC4899',
-      indigo: '#4F46E5',
-      brown: '#8D5B3E',
+    /**
+     * One palette, two renderings: the fixed hex is used by swatches, dots and
+     * the filter bar; the text token switches with the theme via CSS.
+     */
+    const COLORS = {
+      green: { hex: '#22C55E', text: 'var(--dsh-tag-text-green)' },
+      amber: { hex: '#F59E0B', text: 'var(--dsh-tag-text-amber)' },
+      blue: { hex: '#3B82F6', text: 'var(--dsh-tag-text-blue)' },
+      red: { hex: '#EF4444', text: 'var(--dsh-tag-text-red)' },
+      purple: { hex: '#A855F7', text: 'var(--dsh-tag-text-purple)' },
+      gray: { hex: '#6B7280', text: 'var(--dsh-tag-text-gray)' },
+      teal: { hex: '#06B6D4', text: 'var(--dsh-tag-text-teal)' },
+      pink: { hex: '#EC4899', text: 'var(--dsh-tag-text-pink)' },
+      indigo: { hex: '#4F46E5', text: 'var(--dsh-tag-text-indigo)' },
+      brown: { hex: '#8D5B3E', text: 'var(--dsh-tag-text-brown)' },
     }
-
-    /** Title colors resolve through per-theme variables defined in CSS. */
-    const PALETTE = {
-      green: 'var(--dsh-tag-text-green)',
-      amber: 'var(--dsh-tag-text-amber)',
-      blue: 'var(--dsh-tag-text-blue)',
-      red: 'var(--dsh-tag-text-red)',
-      purple: 'var(--dsh-tag-text-purple)',
-      gray: 'var(--dsh-tag-text-gray)',
-      teal: 'var(--dsh-tag-text-teal)',
-      pink: 'var(--dsh-tag-text-pink)',
-      indigo: 'var(--dsh-tag-text-indigo)',
-      brown: 'var(--dsh-tag-text-brown)',
-    }
+    const SWATCHES = Object.keys(COLORS)
 
     const zh = {
       nav: '标签',
@@ -75,12 +64,12 @@ window.__ModuleLoader__.load({
       filterAll: '全部',
       filterTitle: '按标签过滤会话',
       filterEmpty: '没有带「{label}」标签的会话',
-      filterWorkspaceEmpty: '「{label}」标在工作区上；这个工作区下暂无会话',
+      workspaceEmpty: '「{label}」标在工作区上；这个工作区下暂无会话',
       clearFilter: '清除过滤',
       emptyHint: '换个标签，或清除过滤查看全部会话。',
       showFilter: '显示过滤条',
-      showFilterDesc: '在工作区列表上方显示标签颜色过滤条。',
-      showFilterFailed: '过滤条设置没有保存',
+      filterDesc: '在工作区列表上方显示标签颜色过滤条。',
+      filterFailed: '过滤条设置没有保存',
       colorGreen: '绿色',
       colorAmber: '橙色',
       colorBlue: '蓝色',
@@ -113,12 +102,12 @@ window.__ModuleLoader__.load({
       filterAll: 'All',
       filterTitle: 'Filter sessions by tag',
       filterEmpty: 'No sessions tagged “{label}”',
-      filterWorkspaceEmpty: '“{label}” is on a workspace; it holds no sessions yet',
+      workspaceEmpty: '“{label}” is on a workspace; it holds no sessions yet',
       clearFilter: 'Clear filter',
       emptyHint: 'Try another tag, or clear the filter to see everything.',
       showFilter: 'Show filter bar',
-      showFilterDesc: 'Show the tag colour filters above the workspace list.',
-      showFilterFailed: 'The filter bar setting was not saved',
+      filterDesc: 'Show the tag colour filters above the workspace list.',
+      filterFailed: 'The filter bar setting was not saved',
       colorGreen: 'Green',
       colorAmber: 'Amber',
       colorBlue: 'Blue',
@@ -151,12 +140,12 @@ window.__ModuleLoader__.load({
       filterAll: 'すべて',
       filterTitle: 'タグでセッションを絞り込む',
       filterEmpty: '「{label}」の付いたセッションはありません',
-      filterWorkspaceEmpty: '「{label}」はこのワークスペースに付いていますが、セッションはまだありません',
+      workspaceEmpty: '「{label}」はこのワークスペースに付いていますが、セッションはまだありません',
       clearFilter: 'フィルターを解除',
       emptyHint: '別のタグを選ぶか、フィルターを解除するとすべて表示されます。',
       showFilter: 'フィルターバーを表示',
-      showFilterDesc: 'ワークスペース一覧の上にタグの色フィルターを表示します。',
-      showFilterFailed: 'フィルター設定を保存できませんでした',
+      filterDesc: 'ワークスペース一覧の上にタグの色フィルターを表示します。',
+      filterFailed: 'フィルター設定を保存できませんでした',
       colorGreen: '緑',
       colorAmber: 'オレンジ',
       colorBlue: '青',
@@ -189,12 +178,12 @@ window.__ModuleLoader__.load({
       filterAll: 'Todas',
       filterTitle: 'Filtrar sesiones por etiqueta',
       filterEmpty: 'Ninguna sesión tiene «{label}»',
-      filterWorkspaceEmpty: '«{label}» está en este espacio de trabajo, pero aún no tiene sesiones',
+      workspaceEmpty: '«{label}» está en este espacio de trabajo, pero aún no tiene sesiones',
       clearFilter: 'Quitar filtro',
       emptyHint: 'Prueba otra etiqueta o quita el filtro para verlo todo.',
       showFilter: 'Mostrar barra de filtros',
-      showFilterDesc: 'Muestra los filtros de color sobre la lista de espacios de trabajo.',
-      showFilterFailed: 'No se pudo guardar el ajuste de la barra de filtros',
+      filterDesc: 'Muestra los filtros de color sobre la lista de espacios de trabajo.',
+      filterFailed: 'No se pudo guardar el ajuste de la barra de filtros',
       colorGreen: 'Verde',
       colorAmber: 'Ámbar',
       colorBlue: 'Azul',
@@ -227,12 +216,12 @@ window.__ModuleLoader__.load({
       filterAll: 'Toutes',
       filterTitle: 'Filtrer les sessions par étiquette',
       filterEmpty: 'Aucune session étiquetée « {label} »',
-      filterWorkspaceEmpty: '« {label} » est sur cet espace de travail, mais il ne contient encore aucune session',
+      workspaceEmpty: '« {label} » est sur cet espace de travail, mais il ne contient encore aucune session',
       clearFilter: 'Retirer le filtre',
       emptyHint: 'Essayez une autre étiquette ou retirez le filtre pour tout afficher.',
       showFilter: 'Afficher la barre de filtres',
-      showFilterDesc: 'Affiche les filtres de couleur au-dessus de la liste des espaces de travail.',
-      showFilterFailed: 'Le réglage de la barre de filtres n’a pas été enregistré',
+      filterDesc: 'Affiche les filtres de couleur au-dessus de la liste des espaces de travail.',
+      filterFailed: 'Le réglage de la barre de filtres n’a pas été enregistré',
       colorGreen: 'Vert',
       colorAmber: 'Ambre',
       colorBlue: 'Bleu',
@@ -265,12 +254,12 @@ window.__ModuleLoader__.load({
       filterAll: 'Alle',
       filterTitle: 'Sitzungen nach Tag filtern',
       filterEmpty: 'Keine Sitzung mit dem Tag „{label}“',
-      filterWorkspaceEmpty: '„{label}“ liegt auf diesem Workspace, der noch keine Sitzungen enthält',
+      workspaceEmpty: '„{label}“ liegt auf diesem Workspace, der noch keine Sitzungen enthält',
       clearFilter: 'Filter entfernen',
       emptyHint: 'Wähle einen anderen Tag oder entferne den Filter, um alles zu sehen.',
       showFilter: 'Filterleiste anzeigen',
-      showFilterDesc: 'Zeigt die Tag-Farbfilter über der Workspace-Liste.',
-      showFilterFailed: 'Die Filterleisten-Einstellung wurde nicht gespeichert',
+      filterDesc: 'Zeigt die Tag-Farbfilter über der Workspace-Liste.',
+      filterFailed: 'Die Filterleisten-Einstellung wurde nicht gespeichert',
       colorGreen: 'Grün',
       colorAmber: 'Orange',
       colorBlue: 'Blau',
@@ -303,12 +292,12 @@ window.__ModuleLoader__.load({
       filterAll: 'Все',
       filterTitle: 'Фильтровать сессии по метке',
       filterEmpty: 'Нет сессий с меткой «{label}»',
-      filterWorkspaceEmpty: 'На этом рабочем пространстве стоит «{label}», но сессий пока нет',
+      workspaceEmpty: 'На этом рабочем пространстве стоит «{label}», но сессий пока нет',
       clearFilter: 'Снять фильтр',
       emptyHint: 'Выберите другую метку или снимите фильтр, чтобы увидеть всё.',
       showFilter: 'Показывать панель фильтров',
-      showFilterDesc: 'Показывает цветные фильтры меток над списком рабочих пространств.',
-      showFilterFailed: 'Настройка панели фильтров не сохранилась',
+      filterDesc: 'Показывает цветные фильтры меток над списком рабочих пространств.',
+      filterFailed: 'Настройка панели фильтров не сохранилась',
       colorGreen: 'Зелёный',
       colorAmber: 'Янтарный',
       colorBlue: 'Синий',
@@ -341,12 +330,12 @@ window.__ModuleLoader__.load({
       filterAll: 'Todas',
       filterTitle: 'Filtrar sessões por etiqueta',
       filterEmpty: 'Nenhuma sessão com “{label}”',
-      filterWorkspaceEmpty: '“{label}” está neste espaço de trabalho, que ainda não tem sessões',
+      workspaceEmpty: '“{label}” está neste espaço de trabalho, que ainda não tem sessões',
       clearFilter: 'Remover filtro',
       emptyHint: 'Tente outra etiqueta ou remova o filtro para ver tudo.',
       showFilter: 'Mostrar barra de filtros',
-      showFilterDesc: 'Mostra os filtros de cor acima da lista de espaços de trabalho.',
-      showFilterFailed: 'A configuração da barra de filtros não foi salva',
+      filterDesc: 'Mostra os filtros de cor acima da lista de espaços de trabalho.',
+      filterFailed: 'A configuração da barra de filtros não foi salva',
       colorGreen: 'Verde',
       colorAmber: 'Âmbar',
       colorBlue: 'Azul',
@@ -391,7 +380,6 @@ body[data-ds-dark-theme]{
 .dsh-tag-dot{flex:none;width:9px;height:9px;border-radius:50%;display:inline-block}
 .dsh-tag-input{flex:1;min-width:120px;box-sizing:border-box;height:34px;padding:0 10px;border-radius:8px;border:1px solid var(--dsw-alias-border-l4,rgba(127,127,127,.3));background:var(--dsw-alias-button-elevated-fill,rgba(127,127,127,.06));color:inherit;font:inherit;outline:none}
 .dsh-tag-input:focus{border-color:var(--dsw-alias-state-business-primary,#3d7bfd)}
-.dsh-tag-swatches{display:flex;align-items:center;gap:5px}
 .dsh-tag-swatch{position:relative;width:20px;height:20px;padding:0;border:0;border-radius:50%;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
 .dsh-tag-swatch.is-current{box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
 .dsh-tag-swatch.is-current::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;line-height:1;text-shadow:0 1px 1px rgba(0,0,0,.45)}
@@ -403,14 +391,9 @@ body[data-ds-dark-theme]{
 .dsh-tag-pickerButton .dsh-tag-dot{width:20px;height:20px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
 .dsh-tag-colorMenu{position:absolute;top:calc(100% + 4px);left:0;z-index:30;display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:var(--dsw-alias-surface-primary,#fff);border:1px solid var(--dsw-alias-border-l3,rgba(127,127,127,.22));box-shadow:0 8px 20px rgba(0,0,0,.14)}
 .dsh-tag-colorMenu.is-right{left:auto;right:0}
-.dsh-tag-dotButton{display:flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:0;border-radius:50%;background:transparent;cursor:pointer}
-.dsh-tag-dotButton:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.12))}
-.dsh-tag-dotButton:disabled{cursor:default;opacity:.5}
 .dsh-tag-hint{margin:0;padding:0 2px;font-size:12px;color:var(--dsw-alias-label-tertiary,#888)}
 .dsh-tag-primary{height:32px;padding:0 14px;border:0;border-radius:8px;background:var(--dsw-alias-state-business-primary,#3d7bfd);color:#fff;font:inherit;font-size:13px;cursor:pointer}
 .dsh-tag-primary:disabled{opacity:.45;cursor:default}
-.dsh-tag-secondary{height:32px;padding:0 12px;border:1px solid var(--dsw-alias-border-l4,rgba(127,127,127,.3));border-radius:8px;background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer}
-.dsh-tag-secondary:disabled{opacity:.45;cursor:default}
 .dsh-tag-delete{display:flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border:0;border-radius:6px;background:transparent;color:var(--dsw-alias-label-tertiary,#888);cursor:pointer}
 .dsh-tag-delete:hover{background:var(--dsw-alias-state-error-primary,#e5484d);color:#fff}
 .dsh-tag-delete:disabled{opacity:.45;cursor:default}
@@ -438,7 +421,8 @@ body[data-ds-dark-theme]{
 .dsh-tag-filterWrap{flex:none;box-sizing:border-box;width:100%}
 .dsh-tag-filter{display:flex;align-items:center;gap:6px;flex:none;box-sizing:border-box;width:100%;padding:2px var(--dsh-sidebar-row-padding,8px) 6px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
 .dsh-tag-filter::-webkit-scrollbar{display:none}
-.dsh-tag-filterAll{position:relative;width:20px;height:20px;padding:0;border:0;border-radius:50%;flex:none;cursor:pointer;background:conic-gradient(#22C55E 0 36deg,#F59E0B 36deg 72deg,#3B82F6 72deg 108deg,#EF4444 108deg 144deg,#A855F7 144deg 180deg,#6B7280 180deg 216deg,#06B6D4 216deg 252deg,#EC4899 252deg 288deg,#4F46E5 288deg 324deg,#8D5B3E 324deg 360deg);opacity:.55;transition:opacity .12s ease}
+/* The rainbow background is built from COLORS at runtime. */
+.dsh-tag-filterAll{position:relative;width:20px;height:20px;padding:0;border:0;border-radius:50%;flex:none;cursor:pointer;opacity:.55;transition:opacity .12s ease}
 .dsh-tag-filterAll::after{content:'';position:absolute;inset:4px;border-radius:50%;background:var(--dsw-alias-surface-primary,#fff)}
 .dsh-tag-filterAll:hover{opacity:1}
 .dsh-tag-filterAll.is-active{opacity:1}
@@ -457,11 +441,33 @@ body[data-ds-dark-theme]{
 .dsh-tag-emptyAction:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.08))}
 `
 
+    function isHex(value) {
+      return typeof value === 'string' && HEX_COLOR.test(value)
+    }
+
+    /** Palette hex, or a stored custom hex; anything else falls back to gray. */
+    function swatch(color) {
+      return COLORS[color]?.hex ?? (isHex(color) ? color : COLORS.gray.hex)
+    }
+
+    /** Title text: palette token when known, stored hex otherwise. */
+    function textColor(color) {
+      return COLORS[color]?.text ?? (isHex(color) ? color : COLORS.gray.text)
+    }
+
+    /** The "all colors" ring, generated from the same palette as the swatches. */
+    function rainbow() {
+      const step = 360 / SWATCHES.length
+      const stops = SWATCHES.map((name, index) =>
+        `${COLORS[name].hex} ${index * step}deg ${(index + 1) * step}deg`)
+      return `conic-gradient(${stops.join(',')})`
+    }
+
     /** Hex from the palette, with alpha for the card outline. */
     function tint(hex, alpha) {
-      const match = /^#([0-9a-f]{6})$/i.exec(hex)
+      const match = HEX_COLOR.exec(hex)
       if (match === null) return hex
-      const value = Number.parseInt(match[1], 16)
+      const value = Number.parseInt(match[0].slice(1), 16)
       const red = (value >> 16) & 0xff
       const green = (value >> 8) & 0xff
       const blue = value & 0xff
@@ -470,8 +476,7 @@ body[data-ds-dark-theme]{
 
     /** Menu dot as an inline SVG so every tag carries its own color. */
     function dotSrc(color) {
-      const fill = HEX[color] || (/^#[0-9a-f]{6}$/i.test(color) ? color : HEX.gray)
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="${fill}"/></svg>`
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><circle cx="6" cy="6" r="5" fill="${swatch(color)}"/></svg>`
       return `data:image/svg+xml,${encodeURIComponent(svg)}`
     }
 
@@ -480,10 +485,18 @@ body[data-ds-dark-theme]{
       return h('img', { src: icon.src, width: 12, height: 12, alt: '', style: { display: 'block' } })
     }
 
+    function Dot({ color, className = 'dsh-tag-dot' }) {
+      return h('span', {
+        className,
+        style: { backgroundColor: swatch(color) },
+        'aria-hidden': 'true',
+      })
+    }
+
     function TagIcon({ size = 16, active }) {
       return h('svg', { width: size, height: size, viewBox: '0 0 16 16', 'aria-hidden': true },
         h('path', {
-          d: 'M2.5 2.5h6.1l4.9 4.9a1.2 1.2 0 0 1 0 1.7l-3.2 3.2a1.2 1.2 0 0 1-1.7 0L2.5 8.6V2.5z',
+          d: TAG_PATH,
           fill: active ? 'currentColor' : 'none',
           stroke: 'currentColor',
           strokeWidth: 1.2,
@@ -505,16 +518,16 @@ body[data-ds-dark-theme]{
         )
         const t = ctx.locale.bind(NS)
 
-        const baseStyle = document.createElement('style')
-        baseStyle.dataset.dshTag = ''
+        function addStyle(kind) {
+          const style = document.createElement('style')
+          style.dataset.dshTag = kind
+          document.head.append(style)
+          return style
+        }
+        const baseStyle = addStyle('base')
         baseStyle.textContent = CSS
-        document.head.append(baseStyle)
-        const colorStyle = document.createElement('style')
-        colorStyle.dataset.dshTagColor = ''
-        document.head.append(colorStyle)
-        const filterStyle = document.createElement('style')
-        filterStyle.dataset.dshTagFilter = ''
-        document.head.append(filterStyle)
+        const colorStyle = addStyle('color')
+        const filterStyle = addStyle('filter')
 
         // ── Data ───────────────────────────────────────────────────────────────
         let state = {
@@ -541,12 +554,17 @@ body[data-ds-dark-theme]{
         function getState() {
           return state
         }
-
-        function swatch(color) {
-          return HEX[color] || (/^#[0-9a-f]{6}$/i.test(color) ? color : HEX.gray)
+        function applySnapshot(data) {
+          setState({ ...normalize(data), loaded: true, error: null })
         }
-        function textColor(color) {
-          return PALETTE[color] || (/^#[0-9a-f]{6}$/i.test(color) ? color : PALETTE.gray)
+
+        function tagOf(tagId) {
+          return state.tags.find(tag => tag.id === tagId)
+        }
+        /** Colors still available to a tag, keeping the current one selectable. */
+        function colorChoices(tags, exceptId, currentColor) {
+          const used = new Set(tags.filter(tag => tag.id !== exceptId).map(tag => tag.color))
+          return SWATCHES.filter(name => name === currentColor || !used.has(name))
         }
         /** Localized palette name; unknown colors keep their stored id. */
         function colorName(name) {
@@ -554,30 +572,35 @@ body[data-ds-dark-theme]{
           const text = t(key)
           return typeof text === 'string' && text.length > 0 && text !== key ? text : name
         }
-        function colorOfTag(tagId) {
-          const tag = state.tags.find(item => item.id === tagId)
+        function tagColor(tagId) {
+          const tag = tagOf(tagId)
           return tag === undefined ? null : textColor(tag.color)
         }
         function paint() {
           const rules = []
           for (const [sessionId, tagId] of Object.entries(state.sessions)) {
-            const color = colorOfTag(tagId)
+            const color = tagColor(tagId)
             if (color !== null) rules.push(rule('session', sessionId, color))
           }
           for (const workspace of state.workspaces) {
-            const color = colorOfTag(workspace.tagId)
+            const color = tagColor(workspace.tagId)
             if (color !== null) rules.push(rule('workspace', workspace.id, color))
           }
           colorStyle.textContent = rules.join('\n')
           renderFilter()
           applyFilter()
         }
+        function cssSafe(value) {
+          return String(value).replace(/["\\\r\n]/g, '')
+        }
         function rule(kind, id, color) {
-          const safe = String(id).replace(/["\\\r\n]/g, '')
-          return `[data-row-key="${kind}:${safe}"] [class*="_title"]{color:${color}}`
+          return `[data-row-key="${kind}:${cssSafe(id)}"] [class*="_title"]{color:${color}}`
         }
 
-        function tagIdOf(value) {
+        function isRecord(value) {
+          return value !== null && typeof value === 'object' && !Array.isArray(value)
+        }
+        function readTag(value) {
           if (typeof value === 'string') return value
           if (Array.isArray(value)) {
             for (let index = value.length - 1; index >= 0; index -= 1) {
@@ -585,32 +608,51 @@ body[data-ds-dark-theme]{
             }
             return undefined
           }
-          if (value !== null && typeof value === 'object') {
+          if (isRecord(value)) {
             if (typeof value.tagId === 'string') return value.tagId
-            if (Array.isArray(value.tagIds)) return tagIdOf(value.tagIds)
+            if (Array.isArray(value.tagIds)) return readTag(value.tagIds)
           }
           return undefined
         }
 
+        /** Older hosts may send partial data; keep the UI able to render it. */
+        function normalizeTags(value) {
+          if (!Array.isArray(value)) return []
+          const tags = []
+          for (const item of value) {
+            if (!isRecord(item)) continue
+            const id = typeof item.id === 'string' ? item.id : ''
+            if (id.length === 0) continue
+            tags.push({
+              id,
+              label: typeof item.label === 'string' && item.label.length > 0 ? item.label : id,
+              color: typeof item.color === 'string' ? item.color : 'gray',
+              order: typeof item.order === 'number' && Number.isFinite(item.order) ? item.order : 0,
+            })
+          }
+          return tags
+        }
+
         function normalize(data) {
+          const source = isRecord(data) ? data : {}
           const settings = {
             // An older host has no settings field; keep the bar visible.
-            showFilter: !(data && data.settings && data.settings.showFilter === false),
+            showFilter: !(isRecord(source.settings) && source.settings.showFilter === false),
           }
-          const tags = Array.isArray(data && data.tags) ? data.tags : []
+          const tags = normalizeTags(source.tags)
           const sessions = {}
-          if (data && data.sessions && typeof data.sessions === 'object') {
-            for (const [id, value] of Object.entries(data.sessions)) {
-              const tagId = tagIdOf(value)
+          if (isRecord(source.sessions)) {
+            for (const [id, value] of Object.entries(source.sessions)) {
+              const tagId = readTag(value)
               if (tagId !== undefined) sessions[id] = tagId
             }
           }
-          const workspaces = (Array.isArray(data && data.workspaces) ? data.workspaces : [])
+          const workspaces = (Array.isArray(source.workspaces) ? source.workspaces : [])
             .map(item => {
-              const tagId = tagIdOf(item)
+              const tagId = readTag(item)
               return {
-                id: String((item && item.id) || ''),
-                ...(item && typeof item.path === 'string' ? { path: item.path } : {}),
+                id: isRecord(item) ? String(item.id || '') : '',
+                ...(isRecord(item) && typeof item.path === 'string' ? { path: item.path } : {}),
                 tagId,
               }
             })
@@ -620,11 +662,11 @@ body[data-ds-dark-theme]{
 
         // ── Filter bar ─────────────────────────────────────────────────────────
         const FILTER_KEY = 'dsh.tag.filter.v1'
-        let filterTagId = readFilter()
+        let filterTag = readFilter()
         let filterWrap = null
         let filterBar = null
         let filterEmpty = null
-        let filterEmptyTitle = null
+        let emptyTitle = null
         let filterObserver = null
         let filterTimer = 0
         let filterSignature = ''
@@ -656,22 +698,26 @@ body[data-ds-dark-theme]{
         }
         function writeFilter() {
           try {
-            if (filterTagId === null) window.localStorage.removeItem(FILTER_KEY)
-            else window.localStorage.setItem(FILTER_KEY, filterTagId)
+            if (filterTag === null) window.localStorage.removeItem(FILTER_KEY)
+            else window.localStorage.setItem(FILTER_KEY, filterTag)
           } catch {
             // Blocked storage only loses persistence; the filter still applies.
           }
         }
-        function clearFilter() {
+        /** Drop the active tag and restore groups this filter opened. */
+        function resetFilter() {
           restoreExpanded()
           userCollapsed.clear()
-          filterTagId = null
+          filterTag = null
           writeFilter()
+        }
+        function clearFilter() {
+          resetFilter()
           renderFilter()
           applyFilter()
         }
         function selectFilter(tagId) {
-          if (tagId === filterTagId) {
+          if (tagId === filterTag) {
             clearFilter()
             return
           }
@@ -679,16 +725,23 @@ body[data-ds-dark-theme]{
           // except those that also match the new tag and stay open.
           restoreExpanded(expandedKeys(computeGroups(tagId)))
           userCollapsed.clear()
-          filterTagId = tagId
+          filterTag = tagId
           writeFilter()
           renderFilter()
           applyFilter()
         }
-        function cssSafe(value) {
-          return String(value).replace(/["\\\r\n]/g, '')
+        /** Simulate a row click without recording it as a user decision. */
+        function clickNode(node) {
+          if (node === null) return
+          autoClicking += 1
+          try {
+            node.click()
+          } finally {
+            autoClicking -= 1
+          }
         }
         /** Our own writes are not React updates; pausing the observer avoids feedback loops. */
-        function withoutFilterObserver(task) {
+        function withoutObserver(task) {
           if (filterObserver !== null) filterObserver.disconnect()
           try {
             return task()
@@ -698,7 +751,7 @@ body[data-ds-dark-theme]{
             }
           }
         }
-        function ensureFilterWrap() {
+        function ensureWrap() {
           if (filterWrap !== null) return filterWrap
           filterWrap = document.createElement('div')
           filterWrap.className = 'dsh-tag-filterWrap'
@@ -713,12 +766,11 @@ body[data-ds-dark-theme]{
           icon.className = 'dsh-tag-emptyIcon'
           icon.setAttribute('aria-hidden', 'true')
           icon.innerHTML = '<svg width="18" height="18" viewBox="0 0 16 16">' +
-            '<path d="M2.5 2.5h6.1l4.9 4.9a1.2 1.2 0 0 1 0 1.7l-3.2 3.2a1.2 1.2 0 0 1-1.7 0L2.5 8.6V2.5z" ' +
-            'fill="none" stroke="currentColor" stroke-width="1.2"/>' +
+            `<path d="${TAG_PATH}" fill="none" stroke="currentColor" stroke-width="1.2"/>` +
             '<circle cx="5.2" cy="5.2" r="1" fill="currentColor"/></svg>'
-          filterEmptyTitle = document.createElement('p')
-          filterEmptyTitle.className = 'dsh-tag-emptyTitle'
-          filterEmptyTitle.setAttribute('aria-live', 'polite')
+          emptyTitle = document.createElement('p')
+          emptyTitle.className = 'dsh-tag-emptyTitle'
+          emptyTitle.setAttribute('aria-live', 'polite')
           const hint = document.createElement('p')
           hint.className = 'dsh-tag-emptyHint'
           hint.textContent = t('emptyHint')
@@ -727,74 +779,66 @@ body[data-ds-dark-theme]{
           action.className = 'dsh-tag-emptyAction'
           action.textContent = t('clearFilter')
           action.addEventListener('click', clearFilter)
-          filterEmpty.append(icon, filterEmptyTitle, hint, action)
+          filterEmpty.append(icon, emptyTitle, hint, action)
           filterWrap.append(filterBar, filterEmpty)
           return filterWrap
         }
         /** Rebuild the colour blocks only when the tag list or the selection changed. */
         function renderFilter() {
-          if (filterWrap === null) return
           if (!state.settings.showFilter) {
             // A hidden bar must not keep filtering: drop the selection and the
             // CSS rules it generated, otherwise rows stay hidden with no way
             // back to the full list.
-            if (filterTagId !== null || autoExpanded.size > 0 || autoRevealed.size > 0) {
-              restoreExpanded()
-              userCollapsed.clear()
-              filterTagId = null
-              writeFilter()
+            if (filterTag !== null || autoExpanded.size > 0 || autoRevealed.size > 0) {
+              resetFilter()
               filterSignature = ''
               filterStyle.textContent = ''
             }
-            filterWrap.hidden = true
+            if (filterWrap !== null) filterWrap.hidden = true
             if (filterEmpty !== null) filterEmpty.hidden = true
             return
           }
+          if (filterWrap === null) return
           const tags = state.tags
           filterWrap.hidden = tags.length === 0
           if (tags.length === 0) {
             if (filterSignature !== '') {
               filterSignature = ''
-              withoutFilterObserver(() => filterBar.replaceChildren())
+              withoutObserver(() => filterBar.replaceChildren())
             }
-            if (filterTagId !== null && state.loaded) {
-              restoreExpanded()
-              filterTagId = null
-              writeFilter()
-            }
+            if (filterTag !== null && state.loaded) resetFilter()
             filterEmpty.hidden = true
             return
           }
-          if (filterTagId !== null && !tags.some(tag => tag.id === filterTagId)) {
-            filterTagId = null
-            writeFilter()
-            restoreExpanded()
+          if (filterTag !== null && !tags.some(tag => tag.id === filterTag)) {
+            resetFilter()
           }
           // The MutationObserver re-mounts the bar after React updates. Rebuilding
           // the buttons on every pass would replace the node between a real
           // pointerdown and click, so the click would be lost.
-          const signature = JSON.stringify([filterTagId, tags.map(tag => [tag.id, tag.label, tag.color, tag.order])])
+          const signature = JSON.stringify([filterTag, tags.map(tag => [tag.id, tag.label, tag.color, tag.order])])
           if (signature === filterSignature) return
           filterSignature = signature
           const all = document.createElement('button')
           all.type = 'button'
-          all.className = 'dsh-tag-filterAll' + (filterTagId === null ? ' is-active' : '')
+          all.className = 'dsh-tag-filterAll' + (filterTag === null ? ' is-active' : '')
+          all.style.background = rainbow()
           all.title = t('filterAll')
           all.setAttribute('aria-label', t('filterAll'))
-          all.setAttribute('aria-pressed', String(filterTagId === null))
+          all.setAttribute('aria-pressed', String(filterTag === null))
           all.addEventListener('click', clearFilter)
           const blocks = tags.map(tag => {
             const block = document.createElement('button')
             block.type = 'button'
-            block.className = 'dsh-tag-filterBlock' + (filterTagId === tag.id ? ' is-active' : '')
+            block.className = 'dsh-tag-filterBlock' + (filterTag === tag.id ? ' is-active' : '')
             block.style.backgroundColor = swatch(tag.color)
             block.title = tag.label
             block.setAttribute('aria-label', tag.label)
-            block.setAttribute('aria-pressed', String(filterTagId === tag.id))
+            block.setAttribute('aria-pressed', String(filterTag === tag.id))
             block.addEventListener('click', () => selectFilter(tag.id))
             return block
           })
-          withoutFilterObserver(() => filterBar.replaceChildren(all, ...blocks))
+          withoutObserver(() => filterBar.replaceChildren(all, ...blocks))
         }
         /** The session list's scroll container and the node to insert the bar before. */
         function filterAnchor() {
@@ -817,9 +861,9 @@ body[data-ds-dark-theme]{
         function mountFilter() {
           const place = filterAnchor()
           if (place === null) return false
-          const wrap = ensureFilterWrap()
+          const wrap = ensureWrap()
           if (wrap.parentElement !== place.parent) {
-            withoutFilterObserver(() => place.parent.insertBefore(wrap, place.before))
+            withoutObserver(() => place.parent.insertBefore(wrap, place.before))
           }
           renderFilter()
           return true
@@ -854,7 +898,7 @@ body[data-ds-dark-theme]{
             }
           }
           const byWorkspace = new Map()
-          const taggedByWorkspace = new Map()
+          const ownSessions = new Map()
           const grouped = new Set()
           for (const [workspaceId, ids] of workspaceMembers) {
             const hits = new Set()
@@ -864,7 +908,7 @@ body[data-ds-dark-theme]{
               if (matched.has(id)) hits.add(id)
               if (tagged.has(id)) own.add(id)
             }
-            taggedByWorkspace.set(workspaceId, own)
+            ownSessions.set(workspaceId, own)
             byWorkspace.set(workspaceId, hits.size)
           }
           const ungroupedIds = new Set()
@@ -876,14 +920,14 @@ body[data-ds-dark-theme]{
             taggedWorkspaces,
             matched,
             byWorkspace,
-            taggedByWorkspace,
+            ownSessions,
             ungroupedIds,
             ungrouped: ungroupedIds.size,
             total: matched.size,
           }
         }
 
-        function renderedSessionIds() {
+        function renderedIds() {
           const ids = new Set()
           for (const row of document.querySelectorAll('[data-row-key^="session:"]')) {
             ids.add((row.getAttribute('data-row-key') || '').slice('session:'.length))
@@ -892,7 +936,7 @@ body[data-ds-dark-theme]{
         }
 
         function renderedMatches(tagId) {
-          const ids = renderedSessionIds()
+          const ids = renderedIds()
           let count = 0
           for (const id of ids) {
             if (state.sessions[id] === tagId) count += 1
@@ -921,13 +965,8 @@ body[data-ds-dark-theme]{
             if (autoExpanded.has(key) || userCollapsed.has(key)) continue
             const row = document.querySelector(`[data-row-key="${cssSafe(key)}"]`)
             if (row === null || row.getAttribute('aria-expanded') !== 'false') continue
-            autoClicking += 1
-            try {
-              // The group header's own onClick toggles and persists expansion.
-              row.click()
-            } finally {
-              autoClicking -= 1
-            }
+            // The group header's own onClick toggles and persists expansion.
+            clickNode(row)
             autoExpanded.add(key)
           }
         }
@@ -939,12 +978,7 @@ body[data-ds-dark-theme]{
               const group = key.slice('workspace:'.length)
               const button = document.querySelector(`[data-row-key="overflow:${cssSafe(group)}"]`)
               if (button === null || button.getAttribute('aria-expanded') !== 'true') continue
-              autoClicking += 1
-              try {
-                button.click()
-              } finally {
-                autoClicking -= 1
-              }
+              clickNode(button)
             }
           }
           if (autoExpanded.size === 0) return
@@ -958,12 +992,7 @@ body[data-ds-dark-theme]{
             }
             const row = document.querySelector(`[data-row-key="${cssSafe(key)}"]`)
             if (row === null || row.getAttribute('aria-expanded') !== 'true') continue
-            autoClicking += 1
-            try {
-              row.click()
-            } finally {
-              autoClicking -= 1
-            }
+            clickNode(row)
           }
         }
 
@@ -978,7 +1007,7 @@ body[data-ds-dark-theme]{
           for (const key of expandedKeys(groups)) {
             if (userCollapsed.has(key)) continue
             const workspaceId = key.slice('workspace:'.length)
-            const hits = workspaceId === '' ? groups.ungroupedIds : groups.taggedByWorkspace.get(workspaceId)
+            const hits = workspaceId === '' ? groups.ungroupedIds : groups.ownSessions.get(workspaceId)
             if (hits === undefined || hits.size === 0) continue
             const missingFrom = (rendered) => {
               for (const id of hits) {
@@ -986,38 +1015,33 @@ body[data-ds-dark-theme]{
               }
               return false
             }
-            if (!missingFrom(renderedSessionIds())) continue
+            if (!missingFrom(renderedIds())) continue
             for (let step = 0; step < 40; step += 1) {
               const button = document.querySelector(`[data-row-key="overflow:${cssSafe(workspaceId)}"]`)
               if (button === null || button.getAttribute('aria-expanded') === 'true') break
-              autoClicking += 1
-              try {
-                button.click()
-              } finally {
-                autoClicking -= 1
-              }
+              clickNode(button)
               autoRevealed.add(key)
-              if (!missingFrom(renderedSessionIds())) break
+              if (!missingFrom(renderedIds())) break
             }
             // If the list still does not contain a match (stale catalog, very
             // large group), keep its show-more control visible so the data is
             // reachable instead of silently filtering it out.
-            if (missingFrom(renderedSessionIds())) unresolved.add(key)
+            if (missingFrom(renderedIds())) unresolved.add(key)
           }
           return unresolved
         }
 
-        function updateFilterEmpty(activeTag, groups) {
+        function renderEmpty(activeTag, groups) {
           if (filterEmpty === null) return
           let text = null
           if (groups === null) {
             if (renderedMatches(activeTag.id) === 0) text = t('filterEmpty', { label: activeTag.label })
           } else if (groups.total === 0) {
-            if (groups.taggedWorkspaces.size > 0) text = t('filterWorkspaceEmpty', { label: activeTag.label })
+            if (groups.taggedWorkspaces.size > 0) text = t('workspaceEmpty', { label: activeTag.label })
             else if (renderedMatches(activeTag.id) === 0) text = t('filterEmpty', { label: activeTag.label })
           }
           if (text !== null) {
-            if (filterEmptyTitle !== null && filterEmptyTitle.textContent !== text) filterEmptyTitle.textContent = text
+            if (emptyTitle !== null && emptyTitle.textContent !== text) emptyTitle.textContent = text
             if (filterEmpty.hidden) filterEmpty.hidden = false
           } else if (!filterEmpty.hidden) {
             filterEmpty.hidden = true
@@ -1030,7 +1054,7 @@ body[data-ds-dark-theme]{
          * an active filter never leaves a column of empty sections behind.
          */
         function applyFilter() {
-          const activeTag = filterTagId === null ? undefined : state.tags.find(tag => tag.id === filterTagId)
+          const activeTag = filterTag === null ? undefined : tagOf(filterTag)
           if (activeTag === undefined) {
             if (filterStyle.textContent !== '') filterStyle.textContent = ''
             if (filterEmpty !== null) filterEmpty.hidden = true
@@ -1088,7 +1112,7 @@ body[data-ds-dark-theme]{
             }
           }
           filterStyle.textContent = rules.join('\n')
-          updateFilterEmpty(activeTag, groups)
+          renderEmpty(activeTag, groups)
         }
         /** Collapse one burst of React mutations into one mount + filter pass. */
         function scheduleFilter() {
@@ -1104,7 +1128,7 @@ body[data-ds-dark-theme]{
           try {
             const response = await fetch(API, { cache: 'no-store', credentials: 'same-origin' })
             if (!response.ok) throw new Error(`HTTP ${response.status}`)
-            setState({ ...normalize(await response.json()), loaded: true, error: null })
+            applySnapshot(await response.json())
           } catch (error) {
             setState({ loaded: true, error: error instanceof Error ? error.message : String(error) })
           }
@@ -1119,7 +1143,7 @@ body[data-ds-dark-theme]{
             source = new EventSource(EVENTS)
             source.onmessage = (event) => {
               try {
-                setState({ ...normalize(JSON.parse(event.data)), loaded: true, error: null })
+                applySnapshot(JSON.parse(event.data))
               } catch {
                 // A malformed frame is ignored; the next snapshot replaces it.
               }
@@ -1158,7 +1182,7 @@ body[data-ds-dark-theme]{
             const message = data && data.error ? (data.error.message || data.error.code) : `HTTP ${response.status}`
             throw new Error(message)
           }
-          if (data && data.snapshot) setState({ ...normalize(data.snapshot), loaded: true, error: null })
+          if (data && data.snapshot) applySnapshot(data.snapshot)
           return data
         }
 
@@ -1177,7 +1201,7 @@ body[data-ds-dark-theme]{
         function tagMenu(kind, target) {
           const current = kind === 'session'
             ? state.sessions[target.id]
-            : (state.workspaces.find(item => item.id === target.id) || {}).tagId
+            : state.workspaces.find(item => item.id === target.id)?.tagId
           const parentLabel = kind === 'session' ? t('menuSession') : t('menuWorkspace')
           if (state.tags.length === 0) {
             return [{ id: 'tags', label: parentLabel, disabled: true, children: [{ id: 'empty', label: t('noTags'), disabled: true }] }]
@@ -1214,6 +1238,25 @@ body[data-ds-dark-theme]{
         }
 
         // ── Settings ───────────────────────────────────────────────────────────
+        /** Shared busy/error state for the settings page's async mutations. */
+        function useTask() {
+          const [busy, setBusy] = React.useState(false)
+          const [error, setError] = React.useState(null)
+          const run = React.useCallback(async (task) => {
+            setBusy(true)
+            setError(null)
+            try {
+              return await task()
+            } catch (failure) {
+              setError(failure instanceof Error ? failure.message : String(failure))
+              return undefined
+            } finally {
+              setBusy(false)
+            }
+          }, [])
+          return { busy, error, run }
+        }
+
         /**
          * Color trigger: the dot opens a small listbox of the colors still
          * available to this row. Used colors never reach the menu.
@@ -1242,7 +1285,7 @@ body[data-ds-dark-theme]{
               'aria-expanded': open,
               onClick: () => setOpen(current => !current),
             },
-            h('span', { className: 'dsh-tag-dot', style: { backgroundColor: swatch(value) }, 'aria-hidden': 'true' })),
+            h(Dot, { color: value })),
             open && options.length > 0
               ? h('div', {
                 className: 'dsh-tag-colorMenu' + (align === 'right' ? ' is-right' : ''),
@@ -1264,28 +1307,12 @@ body[data-ds-dark-theme]{
 
         function TagRow({ tag, tags }) {
           const [text, setText] = React.useState(tag.label)
-          const [busy, setBusy] = React.useState(false)
-          const [error, setError] = React.useState(null)
-          const usedByOthers = new Set(
-            tags.filter(item => item.id !== tag.id).map(item => item.color),
-          )
-          const colorOptions = SWATCHES.filter(name => name === tag.color || !usedByOthers.has(name))
+          const { busy, error, run } = useTask()
+          const colorOptions = colorChoices(tags, tag.id, tag.color)
 
           React.useEffect(() => {
             setText(tag.label)
           }, [tag.label])
-
-          async function run(task) {
-            setBusy(true)
-            setError(null)
-            try {
-              await task()
-            } catch (failure) {
-              setError(failure instanceof Error ? failure.message : String(failure))
-            } finally {
-              setBusy(false)
-            }
-          }
 
           const save = () => {
             const next = text.trim()
@@ -1357,14 +1384,13 @@ body[data-ds-dark-theme]{
           const snapshot = React.useSyncExternalStore(subscribe, getState)
           const [label, setLabel] = React.useState('')
           const [color, setColor] = React.useState('green')
-          const [busy, setBusy] = React.useState(false)
-          const [error, setError] = React.useState(null)
-          const [settingsBusy, setSettingsBusy] = React.useState(false)
-          const [settingsError, setSettingsError] = React.useState(false)
-          const usedColors = new Set(snapshot.tags.map(tag => tag.color))
-          const availableColors = SWATCHES.filter(name => !usedColors.has(name))
-          const atLimit = snapshot.tags.length >= 10
+          const createTask = useTask()
+          const filterTask = useTask()
+          const availableColors = colorChoices(snapshot.tags, null, null)
+          const atLimit = snapshot.tags.length >= MAX_TAGS
           const selectedColor = availableColors.includes(color) ? color : availableColors[0] ?? ''
+          const settingsBusy = filterTask.busy
+          const settingsError = filterTask.error !== null
 
           React.useEffect(() => {
             void refresh()
@@ -1375,22 +1401,16 @@ body[data-ds-dark-theme]{
           }, [snapshot.tags, color])
 
           const toggleFilter = (next) => {
-            setSettingsBusy(true)
-            setSettingsError(false)
-            void request('PATCH', '/settings', { showFilter: next })
-              .catch(() => setSettingsError(true))
-              .finally(() => setSettingsBusy(false))
+            void filterTask.run(() => request('PATCH', '/settings', { showFilter: next }))
           }
 
           const create = () => {
             const text = label.trim()
             if (text.length === 0 || atLimit || selectedColor.length === 0) return
-            setBusy(true)
-            setError(null)
-            void request('POST', '', { label: text, color: selectedColor })
-              .then(() => setLabel(''))
-              .catch((failure) => setError(failure instanceof Error ? failure.message : String(failure)))
-              .finally(() => setBusy(false))
+            void createTask.run(async () => {
+              await request('POST', '', { label: text, color: selectedColor })
+              setLabel('')
+            })
           }
 
           return h('section', { className: 'dsh-tag-settings' },
@@ -1399,9 +1419,9 @@ body[data-ds-dark-theme]{
             h('div', { className: 'dsh-tag-switchRow' },
               h('div', { className: 'dsh-tag-switchText' },
                 h('div', { className: 'dsh-tag-switchTitle' }, t('showFilter')),
-                h('div', { className: 'dsh-tag-switchDesc' }, t('showFilterDesc')),
+                h('div', { className: 'dsh-tag-switchDesc' }, t('filterDesc')),
                 settingsError
-                  ? h('div', { className: 'dsh-tag-error', role: 'alert' }, t('showFilterFailed'))
+                  ? h('div', { className: 'dsh-tag-error', role: 'alert' }, t('filterFailed'))
                   : null),
               h(Switch, {
                 checked: snapshot.settings.showFilter,
@@ -1409,7 +1429,7 @@ body[data-ds-dark-theme]{
                 label: t('showFilter'),
                 onChange: toggleFilter,
               })),
-            error === null ? null : h('p', { className: 'dsh-tag-error' }, error),
+            createTask.error === null ? null : h('p', { className: 'dsh-tag-error' }, createTask.error),
             snapshot.error === null ? null : h('p', { className: 'dsh-tag-error' }, snapshot.error),
             snapshot.tags.length === 0
               ? h('div', { className: 'dsh-tag-empty' }, t('empty'))
@@ -1427,7 +1447,7 @@ body[data-ds-dark-theme]{
               h(ColorPicker, {
                 value: selectedColor,
                 options: availableColors,
-                disabled: busy || atLimit,
+                disabled: createTask.busy || atLimit,
                 align: 'left',
                 onChange: setColor,
                 label: t('color'),
@@ -1436,7 +1456,7 @@ body[data-ds-dark-theme]{
                 className: 'dsh-tag-input',
                 value: label,
                 maxLength: 48,
-                disabled: busy || atLimit,
+                disabled: createTask.busy || atLimit,
                 style: label.trim().length > 0 ? { color: textColor(selectedColor) } : undefined,
                 placeholder: atLimit ? t('limit') : t('newPlaceholder'),
                 'aria-label': t('newPlaceholder'),
@@ -1450,7 +1470,7 @@ body[data-ds-dark-theme]{
               h('button', {
                 type: 'button',
                 className: 'dsh-tag-primary',
-                disabled: busy || atLimit || selectedColor.length === 0 || label.trim().length === 0,
+                disabled: createTask.busy || atLimit || selectedColor.length === 0 || label.trim().length === 0,
                 onClick: create,
               }, t('add'))),
             atLimit
@@ -1468,7 +1488,7 @@ body[data-ds-dark-theme]{
           return h('div', { className: 'dsh-tag-hover' }, h('span', {
             className: 'dsh-tag-hoverItem',
           },
-          h('span', { className: 'dsh-tag-dot', style: { background: swatch(tag.color) }, 'aria-hidden': 'true' }),
+          h(Dot, { color: tag.color }),
           tag.label))
         }
 
@@ -1517,7 +1537,7 @@ body[data-ds-dark-theme]{
           scheduleFilter()
           // A manual toggle of a group we opened is respected; clearing the
           // filter must not undo a choice the user just made.
-          const onGroupClick = (event) => {
+          const rowClick = (event) => {
             if (autoClicking > 0) return
             const target = event.target
             if (!(target instanceof Element)) return
@@ -1544,7 +1564,7 @@ body[data-ds-dark-theme]{
             if (row.getAttribute('aria-expanded') === 'true') userCollapsed.add(key)
             else userCollapsed.delete(key)
           }
-          document.addEventListener('click', onGroupClick, true)
+          document.addEventListener('click', rowClick, true)
           const onVisibility = () => {
             if (document.hidden) {
               if (retryTimer !== undefined) {
@@ -1566,7 +1586,7 @@ body[data-ds-dark-theme]{
           return () => {
             disposed = true
             document.removeEventListener('visibilitychange', onVisibility)
-            document.removeEventListener('click', onGroupClick, true)
+            document.removeEventListener('click', rowClick, true)
             if (filterObserver !== null) {
               filterObserver.disconnect()
               filterObserver = null
@@ -1580,7 +1600,7 @@ body[data-ds-dark-theme]{
               filterWrap = null
               filterBar = null
               filterEmpty = null
-              filterEmptyTitle = null
+              emptyTitle = null
             }
             filterStyle.textContent = ''
             if (source !== undefined) {

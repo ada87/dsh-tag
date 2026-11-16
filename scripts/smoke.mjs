@@ -131,6 +131,13 @@ try {
   }
 
   {
+    const response = await call(route, 'PATCH', `/tags/${created.id}`, { order: 1 })
+    assert.equal(response.status, 200)
+    const reread = await call(route, 'GET', '/tags')
+    assert.equal(reread.json.tags[0].id, created.id, 'snapshots follow the stored order')
+  }
+
+  {
     const response = await call(route, 'PUT', '/tags/sessions/s1', { tagId: 'design' })
     assert.equal(response.status, 200)
     assert.equal(response.json.snapshot.sessions.s1, 'design')
@@ -188,6 +195,17 @@ try {
   {
     const response = await call(route, 'POST', '/tags', { label: 'x', color: 'green' }, { remoteAddress: '10.0.0.9' })
     assert.equal(response.status, 401, 'remote mutation without an origin is rejected')
+  }
+
+  {
+    const response = await call(
+      route,
+      'PUT',
+      '/tags/sessions/s3',
+      { tagId: 'design' },
+      { remoteAddress: '10.0.0.9', headers: { origin: 'http://127.0.0.1:3099' } },
+    )
+    assert.equal(response.status, 200, 'a same-origin remote mutation is accepted')
   }
 
   {

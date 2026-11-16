@@ -11,7 +11,6 @@ import {
   type WorkspaceTag,
 } from './protocol.js'
 
-const RESERVED_IDS = new Set(['events', 'health', 'sessions', 'settings', 'workspaces'])
 const NAMED_COLORS = new Set([
   'green', 'amber', 'blue', 'red', 'purple',
   'gray', 'teal', 'pink', 'indigo', 'brown',
@@ -24,7 +23,7 @@ const STATE_VERSION = 2
  * Only the labels follow the host language, and only when the state file is
  * first created — they are ordinary tags the user can rename afterwards.
  */
-const DEFAULT_TAG_DEFS: ReadonlyArray<readonly [id: string, color: string]> = [
+const DEFAULT_TAGS: ReadonlyArray<readonly [id: string, color: string]> = [
   ['design', 'purple'],
   ['code', 'blue'],
   ['ops', 'green'],
@@ -70,7 +69,6 @@ export interface TagStore {
   deleteTag(id: string): void
   assign(kind: 'session' | 'workspace', targetId: string, tagId: string | null, path?: string): void
   updateSettings(patch: { showFilter?: unknown }): TagSettings
-  close(): void
 }
 
 /**
@@ -78,7 +76,7 @@ export interface TagStore {
  * independent of the storage-domain composition, which is not mounted in
  * every profile.
  */
-export function openTagStore(
+export function openStore(
   file: string,
   workspacePath: (id: string) => string | undefined,
 ): TagStore {
@@ -101,12 +99,10 @@ export function openTagStore(
     }
   }
 
-  const tags = (): Tag[] => state.tags.map(tag => ({
-    id: tag.id,
-    label: tag.label,
-    color: tag.color,
-    order: tag.order,
-  }))
+  /** The public tag shape, ordered by `order` so the API and UI agree. */
+  const tags = (): Tag[] => [...state.tags]
+    .sort((left, right) => left.order - right.order || left.createdAt - right.createdAt)
+    .map(toTag)
 
   const snapshot = (): Snapshot => {
     const list = tags()
@@ -132,20 +128,29 @@ export function openTagStore(
     }
   }
 
+  /** A tag owns one palette color; the message is shared by create and update. */
+  const checkColor = (color: string, exceptId?: string): void => {
+    if (state.tags.some(tag => tag.id !== exceptId && tag.color === color)) {
+      throw new HttpError(409, 'color-in-use', `color "${color}" is already used`)
+    }
+  }
+
   const createTag = (rawLabel: unknown, rawColor: unknown): Tag => {
     if (state.tags.length >= MAX_TAGS) {
       throw new HttpError(409, 'tag-limit', `at most ${MAX_TAGS} tags are supported`)
     }
     const label = normalizeLabel(rawLabel)
     const color = requireColor(rawColor)
-    if (state.tags.some(tag => tag.color === color)) {
-      throw new HttpError(409, 'color-in-use', `color "${color}" is already used`)
+    checkColor(color)
+    const tag: PersistedTag = {
+      id: makeId(state.tags),
+      label,
+      color,
+      order: nextOrder(state.tags),
+      createdAt: Date.now(),
     }
-    const id = newTagId(state.tags)
-    const order = nextOrder(state.tags)
-    const tag: PersistedTag = { id, label, color, order, createdAt: Date.now() }
     save({ ...state, tags: [...state.tags, tag] })
-    return { id, label, color, order }
+    return toTag(tag)
   }
 
   const updateTag = (id: string, patch: TagPatch): Tag => {
@@ -153,9 +158,7 @@ export function openTagStore(
     if (index === -1) throw new HttpError(404, 'tag-not-found', `no tag "${id}"`)
     const current = state.tags[index]!
     const color = patch.color === undefined ? current.color : requireColor(patch.color)
-    if (color !== current.color && state.tags.some(tag => tag.id !== id && tag.color === color)) {
-      throw new HttpError(409, 'color-in-use', `color "${color}" is already used`)
-    }
+    if (color !== current.color) checkColor(color, id)
     const next: PersistedTag = {
       ...current,
       ...(patch.label === undefined ? {} : { label: normalizeLabel(patch.label) }),
@@ -165,7 +168,7 @@ export function openTagStore(
     const list = [...state.tags]
     list[index] = next
     save({ ...state, tags: list })
-    return { id: next.id, label: next.label, color: next.color, order: next.order }
+    return toTag(next)
   }
 
   const deleteTag = (id: string): void => {
@@ -177,7 +180,10 @@ export function openTagStore(
     const workspaces: Record<string, PersistedWorkspace> = {}
     for (const [workspaceId, assignment] of Object.entries(state.workspaces)) {
       if (assignment.tagId === id) continue
-      workspaces[workspaceId] = { tagId: assignment.tagId, ...(assignment.path === undefined ? {} : { path: assignment.path }) }
+      workspaces[workspaceId] = {
+        tagId: assignment.tagId,
+        ...(assignment.path === undefined ? {} : { path: assignment.path }),
+      }
     }
     save({ ...state, tags: state.tags.filter(tag => tag.id !== id), sessions, workspaces })
   }
@@ -227,15 +233,7 @@ export function openTagStore(
     return { ...next }
   }
 
-  return {
-    snapshot,
-    createTag,
-    updateTag,
-    deleteTag,
-    assign,
-    updateSettings,
-    close: () => undefined,
-  }
+  return { snapshot, createTag, updateTag, deleteTag, assign, updateSettings }
 }
 
 function loadState(file: string): PersistedState {
@@ -252,7 +250,7 @@ function seed(): PersistedState {
   const now = Date.now()
   const labels = DEFAULT_LABELS[hostLanguage()] ?? DEFAULT_LABELS.en!
   let order = 10
-  const tags: PersistedTag[] = DEFAULT_TAG_DEFS.map(([id, color]) => {
+  const tags: PersistedTag[] = DEFAULT_TAGS.map(([id, color]) => {
     const tag = { id, label: labels[id] ?? id, color, order, createdAt: now }
     order += 10
     return tag
@@ -282,27 +280,24 @@ function hostLanguage(): string {
 }
 
 function normalizeState(raw: unknown): PersistedState {
-  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) return seed()
-  const record = raw as Record<string, unknown>
-  const tags = normalizeTags(record.tags) ?? seed().tags
+  if (!isRecord(raw)) return seed()
+  const tags = normalizeTags(raw.tags) ?? seed().tags
   const known = new Set(tags.map(tag => tag.id))
 
   const sessions: Record<string, string> = {}
-  if (record.sessions !== null && typeof record.sessions === 'object' && !Array.isArray(record.sessions)) {
-    for (const [id, value] of Object.entries(record.sessions as Record<string, unknown>)) {
-      const tagId = tagIdOf(value)
+  if (isRecord(raw.sessions)) {
+    for (const [id, value] of Object.entries(raw.sessions)) {
+      const tagId = readTag(value)
       if (tagId !== undefined && known.has(tagId)) sessions[id] = tagId
     }
   }
 
   const workspaces: Record<string, PersistedWorkspace> = {}
-  if (record.workspaces !== null && typeof record.workspaces === 'object' && !Array.isArray(record.workspaces)) {
-    for (const [id, value] of Object.entries(record.workspaces as Record<string, unknown>)) {
-      const tagId = tagIdOf(value)
+  if (isRecord(raw.workspaces)) {
+    for (const [id, value] of Object.entries(raw.workspaces)) {
+      const tagId = readTag(value)
       if (tagId === undefined || !known.has(tagId)) continue
-      const entry = value !== null && typeof value === 'object' && !Array.isArray(value)
-        ? value as Record<string, unknown>
-        : {}
+      const entry = isRecord(value) ? value : {}
       workspaces[id] = {
         tagId,
         ...(typeof entry.path === 'string' && entry.path.length > 0 ? { path: entry.path.slice(0, 4096) } : {}),
@@ -312,7 +307,7 @@ function normalizeState(raw: unknown): PersistedState {
 
   return {
     version: STATE_VERSION,
-    settings: normalizeSettings(record.settings),
+    settings: normalizeSettings(raw.settings),
     tags,
     sessions,
     workspaces,
@@ -321,10 +316,9 @@ function normalizeState(raw: unknown): PersistedState {
 
 /** Settings are additive: an older file simply lacks them. */
 function normalizeSettings(value: unknown): TagSettings {
-  if (value === null || typeof value !== 'object' || Array.isArray(value)) return { ...DEFAULT_SETTINGS }
-  const record = value as Record<string, unknown>
+  if (!isRecord(value)) return { ...DEFAULT_SETTINGS }
   return {
-    showFilter: typeof record.showFilter === 'boolean' ? record.showFilter : DEFAULT_SETTINGS.showFilter,
+    showFilter: typeof value.showFilter === 'boolean' ? value.showFilter : DEFAULT_SETTINGS.showFilter,
   }
 }
 
@@ -334,18 +328,17 @@ function normalizeTags(value: unknown): PersistedTag[] | undefined {
   const tags: PersistedTag[] = []
   let order = 10
   for (const entry of value) {
-    if (entry === null || typeof entry !== 'object') continue
-    const item = entry as Record<string, unknown>
-    const id = typeof item.id === 'string' ? item.id.trim().slice(0, 64) : ''
-    const label = typeof item.label === 'string' ? item.label.trim().slice(0, 48) : ''
+    if (!isRecord(entry)) continue
+    const id = typeof entry.id === 'string' ? entry.id.trim().slice(0, 64) : ''
+    const label = typeof entry.label === 'string' ? entry.label.trim().slice(0, 48) : ''
     if (id.length === 0 || label.length === 0 || seen.has(id)) continue
     seen.add(id)
     tags.push({
       id,
       label,
-      color: normalizeColor(item.color),
-      order: typeof item.order === 'number' && Number.isInteger(item.order) && item.order >= 0 ? item.order : order,
-      createdAt: typeof item.createdAt === 'number' ? item.createdAt : Date.now(),
+      color: normalizeColor(entry.color),
+      order: typeof entry.order === 'number' && Number.isInteger(entry.order) && entry.order >= 0 ? entry.order : order,
+      createdAt: typeof entry.createdAt === 'number' ? entry.createdAt : Date.now(),
     })
     order += 10
   }
@@ -353,7 +346,7 @@ function normalizeTags(value: unknown): PersistedTag[] | undefined {
 }
 
 /** Single-tag value; legacy arrays/objects collapse to their last entry. */
-function tagIdOf(value: unknown): string | undefined {
+function readTag(value: unknown): string | undefined {
   if (typeof value === 'string') return value
   if (Array.isArray(value)) {
     for (let index = value.length - 1; index >= 0; index -= 1) {
@@ -361,10 +354,9 @@ function tagIdOf(value: unknown): string | undefined {
     }
     return undefined
   }
-  if (value !== null && typeof value === 'object') {
-    const record = value as Record<string, unknown>
-    if (typeof record.tagId === 'string') return record.tagId
-    if (Array.isArray(record.tagIds)) return tagIdOf(record.tagIds)
+  if (isRecord(value)) {
+    if (typeof value.tagId === 'string') return value.tagId
+    if (Array.isArray(value.tagIds)) return readTag(value.tagIds)
   }
   return undefined
 }
@@ -407,11 +399,11 @@ function nextOrder(tags: PersistedTag[]): number {
   return max + 10
 }
 
-function newTagId(tags: PersistedTag[]): string {
+function makeId(tags: PersistedTag[]): string {
   const existing = new Set(tags.map(tag => tag.id))
   for (let attempt = 0; attempt < 10; attempt += 1) {
     const id = `tag_${randomSuffix()}`
-    if (!RESERVED_IDS.has(id) && !existing.has(id)) return id
+    if (!existing.has(id)) return id
   }
   throw new HttpError(500, 'id-failed', 'could not allocate a tag id')
 }
@@ -419,5 +411,13 @@ function newTagId(tags: PersistedTag[]): string {
 function randomSuffix(): string {
   const bytes = new Uint8Array(5)
   globalThis.crypto.getRandomValues(bytes)
-  return Buffer.from(bytes).toString('base64url').replace(/[^a-z0-9]/gi, '').slice(0, 8).toLowerCase()
+  return Buffer.from(bytes).toString('hex')
+}
+
+function toTag(tag: PersistedTag): Tag {
+  return { id: tag.id, label: tag.label, color: tag.color, order: tag.order }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
