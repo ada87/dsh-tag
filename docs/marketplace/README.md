@@ -1,6 +1,6 @@
 # Marketplace checklist
 
-Prepared for the `dsh-tag` release. The npm package itself only ships `lib/`, `locale/`, the two READMEs, `LICENSE`, `icon.svg` and `cordis.patch.yml`; this folder is repository-only.
+Repository-only notes for the `dsh-tag` release. The npm package ships `lib/`, `locale/`, the three READMEs, `LICENSE`, `icon.svg` and `cordis.patch.yml`; this folder is not published.
 
 ## Package facts the catalogs read
 
@@ -25,9 +25,9 @@ Automatic: it scans the GitHub `dsh-plugin` topic every six hours. No submission
 - [x] `dsh-plugin` topic
 - [x] Repository description
 - [x] `dsh.bundle` in `package.json`
-- [ ] npm publish (`0.1.0`), needed before it can appear in DSH's in-app plugin center
-
-After the npm release, the "verified" state is upgraded by maintainers; an issue in the Hub repository can speed that up.
+- [x] npm package published
+- [ ] Wait for the topic sync, then check the Hub listing
+- [ ] Ask maintainers to upgrade the entry from unconfirmed to verified (optional issue)
 
 ## 2. dsh-plugin-shop
 
@@ -37,36 +37,32 @@ Automatic daily build. Discovery is by npm keyword (`dsh-plugin` / `deepseek-har
 - [x] License present (`MIT`) and repository public
 - [x] Installable, not deprecated
 - [x] Info matches the code (10 colors, 10 tags, 8 languages, `PATCH /tags/settings`)
-- [x] npm `description` and README present
-- [ ] npm publish (`0.1.0`)
-
-No application form. Rejections are listed in the shop's build report with one of its seventeen reasons.
+- [x] npm `description`, keywords and README present
+- [ ] Wait for the next daily build; rejections appear in its build report
 
 ## 3. awesome-dsh-plugin
 
-Current rules differ from the older SHOWCASE.md flow: a submission is **one YAML file** at `data/plugins/<owner>__<repo>.yml`, and CI checks `dsh.bundle`, repository age (at least one day), entry count (max three per PR) and README regeneration.
+A submission is **one YAML file** at `data/plugins/<owner>__<repo>.yml`. CI checks `dsh.bundle`, repository age (at least one day), entry count (max three per PR) and README regeneration.
 
 - [x] Public repository and accurate description
 - [x] `dsh-plugin` topic
 - [x] Repository older than one day
 - [x] Entry prepared at [`awesome-dsh-plugin.yml`](awesome-dsh-plugin.yml)
-- [ ] npm publish preferred
-- [ ] Open the PR from a fork after the npm release
+- [x] npm package published
+- [ ] Fork the list, add the file, open the PR
 
-The current contributing guide does not mention a star threshold. The old "star > 10" rule applied to the retired SHOWCASE.md flow; verify the guide again before submitting.
+The current contributing guide does not mention a star threshold. The old "star > 10" rule applied to the retired SHOWCASE.md flow.
 
-## Publishing
-
-The local npm client points at `https://registry.npmmirror.com`, which is a read-only mirror. `package.json` pins `publishConfig.registry` to npmjs, so a plain publish goes to the right place; logging in explicitly avoids writing the token to the mirror config:
+## Release
 
 ```sh
-npm login --registry=https://registry.npmjs.org
+npm version patch
 npm publish
 ```
 
-`prepublishOnly` rebuilds and reruns the host smoke test before the tarball is created.
+`publishConfig.registry` pins npmjs even though the local npm client points at the npmmirror. `prepublishOnly` rebuilds and reruns the host smoke test before the tarball is created.
 
-Then verify:
+Verify after release:
 
 ```sh
 npm view dsh-tag version description keywords --registry=https://registry.npmjs.org
