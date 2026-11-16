@@ -128,7 +128,7 @@ window.__ModuleLoader__.load({
 .dsh-tag-delete{display:flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border:0;border-radius:6px;background:transparent;color:var(--dsw-alias-label-tertiary,#888);cursor:pointer}
 .dsh-tag-delete:hover{background:var(--dsw-alias-state-error-primary,#e5484d);color:#fff}
 .dsh-tag-delete:disabled{opacity:.45;cursor:default}
-.dsh-tag-create{display:flex;align-items:center;gap:10px;flex-wrap:wrap;min-height:44px;padding:8px 14px;border:1px dashed var(--dsw-alias-border-l3,rgba(127,127,127,.32));border-radius:12px;background:transparent}
+.dsh-tag-create{box-sizing:border-box;display:flex;align-items:center;gap:10px;flex-wrap:wrap;width:100%;min-height:44px;padding:8px 14px;border:1px dashed var(--dsh-tag-frame,var(--dsw-alias-border-l3,rgba(127,127,127,.32)));border-radius:12px;background:transparent}
 .dsh-tag-create .dsh-tag-input{flex:1;min-width:140px;border:0;background:transparent;outline:none}
 .dsh-tag-create .dsh-tag-input:focus{box-shadow:none}
 .dsh-tag-create:focus-within{border-color:var(--dsh-tag-accent,var(--dsw-alias-border-l3,rgba(127,127,127,.32)))}
@@ -136,12 +136,11 @@ window.__ModuleLoader__.load({
 .dsh-tag-settingsHead{display:flex;flex-direction:column;gap:4px}
 .dsh-tag-settingsTitle{margin:0;font-size:16px;line-height:24px;font-weight:500;color:var(--dsw-alias-label-primary,#111)}
 .dsh-tag-settingsList{display:flex;flex-direction:column;gap:8px;margin-top:12px;padding:0;border-radius:0;background:transparent}
-.dsh-tag-rowWrap{display:flex;flex-direction:column;padding:0 14px;border:0.5px solid var(--dsw-alias-settings-card-stroke,rgba(127,127,127,.24));border-radius:12px;background:var(--dsw-alias-settings-card-fill,transparent)}
+.dsh-tag-rowWrap{box-sizing:border-box;display:flex;flex-direction:column;width:100%;padding:0 14px;border:1px solid var(--dsh-tag-frame,var(--dsw-alias-settings-card-stroke,rgba(127,127,127,.24)));border-radius:12px;background:var(--dsw-alias-settings-card-fill,transparent)}
 .dsh-tag-row{display:flex;align-items:center;gap:10px;min-height:44px;padding:2px 0;border-bottom:0}
 .dsh-tag-row .dsh-tag-input{flex:1;min-width:0;height:32px;padding:0 8px;border:0;border-radius:6px;background:transparent;outline:none}
 .dsh-tag-row .dsh-tag-input:focus{background:transparent;box-shadow:none}
-.dsh-tag-rowWrap:focus-within{border-color:var(--dsh-tag-accent,var(--dsw-alias-settings-card-stroke,rgba(127,127,127,.24)))}
-.dsh-tag-settingsCreate{padding-top:12px}
+.dsh-tag-rowWrap:focus-within{border-color:var(--dsh-tag-accent,var(--dsw-alias-settings-card-stroke,rgba(127,127,127,.24)))}.dsh-tag-settingsCreate{padding-top:12px}
 .dsh-tag-empty{padding:10px 0;font-size:13px;color:var(--dsw-alias-label-tertiary,#888)}
 .dsh-tag-hover{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;line-height:17px;color:#cfd3d6}
 .dsh-tag-hoverItem{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
@@ -160,6 +159,18 @@ window.__ModuleLoader__.load({
 .dsh-tag-menuCheck{flex:none;color:var(--dsw-alias-state-business-primary,#3d7bfd);font-weight:600}
 .dsh-tag-filterEmpty{padding:2px var(--dsh-sidebar-row-padding,8px) 8px;font-size:12px;line-height:17px;color:var(--dsw-alias-label-tertiary,#888)}
 `
+
+    /** Menu dot as an inline SVG so every tag carries its own color. */
+    /** Hex from the palette, with alpha for a neutral card outline. */
+    function tint(hex, alpha) {
+      const match = /^#([0-9a-f]{6})$/i.exec(hex)
+      if (match === null) return hex
+      const value = Number.parseInt(match[1], 16)
+      const red = (value >> 16) & 0xff
+      const green = (value >> 8) & 0xff
+      const blue = value & 0xff
+      return `rgba(${red}, ${green}, ${blue}, ${alpha})`
+    }
 
     /** Menu dot as an inline SVG so every tag carries its own color. */
     function dotSrc(color) {
@@ -939,7 +950,10 @@ window.__ModuleLoader__.load({
 
           return h('div', {
             className: 'dsh-tag-rowWrap',
-            style: { '--dsh-tag-accent': swatch(tag.color) },
+            style: {
+              '--dsh-tag-accent': swatch(tag.color),
+              '--dsh-tag-frame': tint(swatch(tag.color), 0.35),
+            },
           },
             h('div', { className: 'dsh-tag-row' },
               h(ColorPicker, {
@@ -1026,9 +1040,14 @@ window.__ModuleLoader__.load({
               ? h('div', { className: 'dsh-tag-empty' }, t('empty'))
               : h('div', { className: 'dsh-tag-settingsList' },
                 snapshot.tags.map(tag => h(TagRow, { key: tag.id, tag, tags: snapshot.tags }))),
-            h('div', {
+            atLimit ? null : h('div', {
               className: 'dsh-tag-create dsh-tag-settingsCreate',
-              style: selectedColor.length > 0 ? { '--dsh-tag-accent': swatch(selectedColor) } : undefined,
+              style: selectedColor.length > 0
+                ? {
+                  '--dsh-tag-accent': swatch(selectedColor),
+                  '--dsh-tag-frame': tint(swatch(selectedColor), 0.35),
+                }
+                : undefined,
             },
               h(ColorPicker, {
                 value: selectedColor,
