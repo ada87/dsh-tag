@@ -109,6 +109,34 @@ dsh plugin --profile web add dsh-tag
 
 写操作目前只开放给 Web；手机要改标签时，后续可以让 dsh-door 代理，避免再引入一套 token。
 
+## 兼容性
+
+`package.json` 声明：
+
+```json
+"engines": { "dsh": ">=0.2.2-rc.1 <0.3.0" }
+```
+
+dsh 在加载插件时会按 semver 校验这个字段（含 prerelease），不满足直接拒绝加载，所以它不是装饰性的说明。当前下限就是实际开发和验证用的版本。
+
+功能比 dsh-door 简单，但依赖仍然分三层：
+
+| 层 | 依赖 | 缺失时 |
+|---|---|---|
+| Host | `webServer.register({ kind: 'prefix' })`；`workspaceRegistry` 可选 | 路由无法挂载，插件不可用 |
+| Client 服务 | `locale`、`contextMenus`、`slots`，以及可选的 `workspaces` / `sessions` | 前三个缺失时插件不会激活（`inject` 声明）；后两个缺失时过滤条退化为只筛当前渲染行 |
+| Client 槽位 | `settings.section`、`settings.section.icon`、`contextMenu.icon`、`sidebar.session.row.hover` | 槽位未声明时注册会被挂起，不报错；对应入口只是不出现 |
+| DOM/CSS | `data-row-key`、`[class*="_title"]`、`data-ds-dark-theme`、`--dsw-alias-*` | 标题着色/过滤可能静默失效；深色文字色依赖 `data-ds-dark-theme` |
+
+已核对的两个版本差异：
+
+- `0.2.1-rc.5` 的 settings 包还没有 `settings.section.icon` 槽位，设置项会没有图标；语言目录也只有 `zh` / `en`，8 种语言虽然能注册但选不到
+- `data-ds-dark-theme` 和 `settings-card-stroke` 在 `0.2.1-rc.5` 就已经存在，主题相关不受影响
+
+结论：**不建议把下限放宽到 0.2.1**。如果确实要支持更老的版本，需要先在对应版本上跑一遍着色、过滤、设置页和多语言，而不是只改版本号。
+
+升级 dsh 后重点回归：会话/工作区标题是否还着色、过滤条是否还能插入、设置页是否还出现在「设置」里。
+
 ## 多语言
 
 界面文案通过 `ctx.locale.register` 注册，内置 `en / zh / ja / es / fr / de / ru / pt`，缺少 key 时沿 dsh 的 fallback 链回落到英文。`locale/<lang>.json` 是插件列表里的标题和简介，与客户端字典分开维护；新增语言时两边都要补。
