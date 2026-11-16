@@ -1112,12 +1112,17 @@ window.__ModuleLoader__.load({
           key: 'dsh-tag.icon',
         }, TagIcon))
 
-        ctx.slots.inject('settings.plugins.tab', () => ctx.slots.register({
-          name: 'settings.plugins.tab',
+        ctx.slots.inject('settings.section', () => ctx.slots.register({
+          name: 'settings.section',
           id: 'dsh-tag',
-          order: 20,
+          order: 6,
           label: () => t('nav'),
         }, SettingsPage))
+
+        ctx.slots.inject('settings.section.icon', () => ctx.slots.register({
+          name: 'settings.section.icon',
+          id: 'dsh-tag',
+        }, TagIcon))
 
         ctx.slots.inject('sidebar.session.row.hover', () => ctx.slots.register({
           name: 'sidebar.session.row.hover',
