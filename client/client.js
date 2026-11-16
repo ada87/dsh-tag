@@ -139,7 +139,7 @@ window.__ModuleLoader__.load({
 .dsh-tag-rowWrap:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.06))}
 .dsh-tag-row{display:flex;align-items:center;gap:10px;min-height:44px;padding:2px 0;border-bottom:0}
 .dsh-tag-row .dsh-tag-input{flex:1;min-width:0;height:32px;padding:0 8px;border:0;border-radius:6px;background:transparent}
-.dsh-tag-row .dsh-tag-input:focus{background:var(--dsw-alias-surface-primary,#fff);box-shadow:0 0 0 1px var(--dsw-alias-state-business-primary,#3d7bfd)}
+.dsh-tag-row .dsh-tag-input:focus{background:var(--dsw-alias-surface-primary,#fff);box-shadow:0 0 0 1px var(--dsh-tag-accent,var(--dsw-alias-state-business-primary,#3d7bfd))}
 .dsh-tag-settingsCreate{padding-top:12px}
 .dsh-tag-empty{padding:10px 0;font-size:13px;color:var(--dsw-alias-label-tertiary,#888)}
 .dsh-tag-hover{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;line-height:17px;color:#cfd3d6}
@@ -950,7 +950,10 @@ window.__ModuleLoader__.load({
                 value: text,
                 maxLength: 48,
                 disabled: busy,
-                style: { color: textColor(tag.color) },
+                style: {
+                  color: textColor(tag.color),
+                  '--dsh-tag-accent': swatch(tag.color),
+                },
                 'aria-label': tag.label,
                 onChange: (event) => setText(event.target.value),
                 onBlur: save,
@@ -1039,7 +1042,9 @@ window.__ModuleLoader__.load({
                 value: label,
                 maxLength: 48,
                 disabled: busy || atLimit,
-                style: label.trim().length > 0 ? { color: textColor(selectedColor) } : undefined,
+                style: label.trim().length > 0
+                  ? { color: textColor(selectedColor), '--dsh-tag-accent': swatch(selectedColor) }
+                  : selectedColor.length > 0 ? { '--dsh-tag-accent': swatch(selectedColor) } : undefined,
                 placeholder: atLimit ? t('limit') : t('newPlaceholder'),
                 'aria-label': t('newPlaceholder'),
                 onChange: (event) => setLabel(event.target.value),
