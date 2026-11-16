@@ -10,7 +10,7 @@ DeepSeek Harness のセッションとワークスペースに色付きのタグ
 
 ## インストール
 
-プラグイン → プラグインを追加 → `dsh-tag`
+プラグイン → プラグインを追加 → `dsh-tag@0.1.0`
 
 ![プラグインを追加](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/install.png)
 
