@@ -118,11 +118,10 @@ window.__ModuleLoader__.load({
 .dsh-tag-swatch.is-current{border-color:var(--dsw-alias-label-primary,#111);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 0 0 1px var(--dsw-alias-label-primary,#111)}
 .dsh-tag-swatch.is-used{opacity:.22;cursor:not-allowed}
 .dsh-tag-dotWrap{position:relative;display:flex;align-items:center;flex:none}
-.dsh-tag-pickerButton{display:flex;align-items:center;gap:5px;height:30px;padding:0 5px;border:0;border-radius:8px;background:transparent;cursor:pointer}
+.dsh-tag-pickerButton{display:flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border:0;border-radius:8px;background:transparent;cursor:pointer}
 .dsh-tag-pickerButton:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.12))}
 .dsh-tag-pickerButton:disabled{cursor:default;opacity:.45}
 .dsh-tag-pickerButton .dsh-tag-dot{width:22px;height:22px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1),0 0 0 2px var(--dsw-alias-surface-primary,#fff),0 1px 3px rgba(0,0,0,.18);background-image:radial-gradient(circle at 32% 26%,rgba(255,255,255,.55),rgba(255,255,255,0) 48%)}
-.dsh-tag-pickerChevron{color:var(--dsw-alias-label-tertiary,#888)}
 .dsh-tag-colorMenu{position:absolute;top:calc(100% + 5px);left:0;z-index:30;display:flex;align-items:center;gap:7px;padding:9px;border-radius:12px;background:var(--dsw-alias-surface-primary,#fff);border:1px solid var(--dsw-alias-border-l3,rgba(127,127,127,.22));box-shadow:0 10px 28px rgba(0,0,0,.2)}
 .dsh-tag-colorMenu.is-right{left:auto;right:0}
 .dsh-tag-dotButton{display:flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:0;border-radius:50%;background:transparent;cursor:pointer}
@@ -887,21 +886,7 @@ window.__ModuleLoader__.load({
               'aria-expanded': open,
               onClick: () => setOpen(current => !current),
             },
-            h('span', { className: 'dsh-tag-dot', style: { backgroundColor: swatch(value) }, 'aria-hidden': 'true' }),
-            h('svg', {
-              className: 'dsh-tag-pickerChevron',
-              width: 10,
-              height: 10,
-              viewBox: '0 0 10 10',
-              'aria-hidden': true,
-            }, h('path', {
-              d: 'M2 3.5L5 6.5L8 3.5',
-              fill: 'none',
-              stroke: 'currentColor',
-              strokeWidth: 1.2,
-              strokeLinecap: 'round',
-              strokeLinejoin: 'round',
-            }))),
+            h('span', { className: 'dsh-tag-dot', style: { backgroundColor: swatch(value) }, 'aria-hidden': 'true' })),
             open && options.length > 0
               ? h('div', {
                 className: 'dsh-tag-colorMenu' + (align === 'right' ? ' is-right' : ''),
