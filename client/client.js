@@ -128,15 +128,14 @@ window.__ModuleLoader__.load({
 .dsh-tag-delete{display:flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border:0;border-radius:6px;background:transparent;color:var(--dsw-alias-label-tertiary,#888);cursor:pointer}
 .dsh-tag-delete:hover{background:var(--dsw-alias-state-error-primary,#e5484d);color:#fff}
 .dsh-tag-delete:disabled{opacity:.45;cursor:default}
-.dsh-tag-create{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border-radius:10px;background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.06))}
+.dsh-tag-create{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-height:44px;padding:8px 12px;border:1px dashed var(--dsw-alias-border-l3,rgba(127,127,127,.32));border-radius:12px;background:transparent}
 .dsh-tag-create .dsh-tag-input{flex:1;min-width:140px;border:0;background:transparent}
 .dsh-tag-addIcon{display:flex;align-items:center;color:var(--dsw-alias-label-tertiary,#888)}
 .dsh-tag-settings{display:flex;flex-direction:column;gap:14px;width:100%}
 .dsh-tag-settingsHead{display:flex;flex-direction:column;gap:4px}
-.dsh-tag-settingsTitle{margin:0;font-size:18px;font-weight:600;line-height:26px;color:var(--dsw-alias-label-primary,#111)}
-.dsh-tag-settingsList{display:flex;flex-direction:column;gap:2px;padding:0;border-radius:0;background:transparent}
-.dsh-tag-rowWrap{display:flex;flex-direction:column;padding:0 4px;border-radius:8px}
-.dsh-tag-rowWrap:hover{background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.06))}
+.dsh-tag-settingsTitle{margin:0;font-size:16px;line-height:24px;font-weight:500;color:var(--dsw-alias-label-primary,#111)}
+.dsh-tag-settingsList{display:flex;flex-direction:column;gap:8px;margin-top:12px;padding:0;border-radius:0;background:transparent}
+.dsh-tag-rowWrap{display:flex;flex-direction:column;padding:0 14px;border:0.5px solid var(--dsw-alias-settings-card-stroke,rgba(127,127,127,.24));border-radius:12px;background:var(--dsw-alias-settings-card-fill,transparent)}
 .dsh-tag-row{display:flex;align-items:center;gap:10px;min-height:44px;padding:2px 0;border-bottom:0}
 .dsh-tag-row .dsh-tag-input{flex:1;min-width:0;height:32px;padding:0 8px;border:0;border-radius:6px;background:transparent}
 .dsh-tag-row .dsh-tag-input:focus{background:var(--dsw-alias-surface-primary,#fff);box-shadow:0 0 0 1px var(--dsh-tag-accent,var(--dsw-alias-state-business-primary,#3d7bfd))}
