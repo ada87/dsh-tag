@@ -94,22 +94,29 @@ window.__ModuleLoader__.load({
 .dsh-tag-dot{flex:none;width:9px;height:9px;border-radius:50%;display:inline-block}
 .dsh-tag-input{flex:1;min-width:120px;box-sizing:border-box;height:34px;padding:0 10px;border-radius:8px;border:1px solid var(--dsw-alias-border-l4,rgba(127,127,127,.3));background:var(--dsw-alias-button-elevated-fill,rgba(127,127,127,.06));color:inherit;font:inherit;outline:none}
 .dsh-tag-input:focus{border-color:var(--dsw-alias-state-business-primary,#3d7bfd)}
-.dsh-tag-swatches{display:flex;align-items:center;gap:6px}
-.dsh-tag-swatch{width:18px;height:18px;padding:0;border:2px solid transparent;border-radius:50%;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
-.dsh-tag-swatch.is-current{border-color:var(--dsw-alias-label-primary,#111)}
-.dsh-tag-primary{height:34px;padding:0 14px;border:0;border-radius:8px;background:var(--dsw-alias-state-business-primary,#3d7bfd);color:#fff;font:inherit;font-size:13px;cursor:pointer}
+.dsh-tag-swatches{display:flex;align-items:center;gap:5px}
+.dsh-tag-swatch{width:16px;height:16px;padding:0;border:2px solid transparent;border-radius:50%;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.dsh-tag-swatch.is-current{border-color:var(--dsw-alias-label-primary,#111);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 0 0 1px var(--dsw-alias-label-primary,#111)}
+.dsh-tag-primary{height:32px;padding:0 14px;border:0;border-radius:8px;background:var(--dsw-alias-state-business-primary,#3d7bfd);color:#fff;font:inherit;font-size:13px;cursor:pointer}
 .dsh-tag-primary:disabled{opacity:.45;cursor:default}
-.dsh-tag-secondary{height:34px;padding:0 14px;border:1px solid var(--dsw-alias-border-l4,rgba(127,127,127,.3));border-radius:8px;background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer}
+.dsh-tag-secondary{height:32px;padding:0 12px;border:1px solid var(--dsw-alias-border-l4,rgba(127,127,127,.3));border-radius:8px;background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer}
 .dsh-tag-secondary:disabled{opacity:.45;cursor:default}
-.dsh-tag-create{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dsh-tag-delete{display:flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border:0;border-radius:6px;background:transparent;color:var(--dsw-alias-label-tertiary,#888);cursor:pointer}
+.dsh-tag-delete:hover{background:var(--dsw-alias-state-error-primary,#e5484d);color:#fff}
+.dsh-tag-delete:disabled{opacity:.45;cursor:default}
+.dsh-tag-create{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border-radius:10px;background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.06))}
+.dsh-tag-create .dsh-tag-input{flex:1;min-width:140px;border:0;background:transparent}
+.dsh-tag-addIcon{display:flex;align-items:center;color:var(--dsw-alias-label-tertiary,#888)}
 .dsh-tag-settings{display:flex;flex-direction:column;gap:14px;width:100%}
 .dsh-tag-settingsHead{display:flex;flex-direction:column;gap:4px}
 .dsh-tag-settingsTitle{margin:0;font-size:18px;font-weight:600;line-height:26px;color:var(--dsw-alias-label-primary,#111)}
 .dsh-tag-settingsDesc{margin:0;font-size:13px;line-height:19px;color:var(--dsw-alias-label-tertiary,#888)}
-.dsh-tag-settingsList{display:flex;flex-direction:column}
-.dsh-tag-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--dsw-alias-border-l4,rgba(127,127,127,.18))}
-.dsh-tag-row:last-child{border-bottom:0}
-.dsh-tag-row .dsh-tag-input{height:32px}
+.dsh-tag-settingsList{display:flex;flex-direction:column;padding:0 12px;border-radius:10px;background:var(--dsw-alias-interactive-bg-hover,rgba(127,127,127,.06))}
+.dsh-tag-rowWrap{display:flex;flex-direction:column;border-bottom:1px solid var(--dsw-alias-border-l4,rgba(127,127,127,.18))}
+.dsh-tag-rowWrap:last-child{border-bottom:0}
+.dsh-tag-row{display:flex;align-items:center;gap:10px;min-height:44px;padding:2px 0;border-bottom:0}
+.dsh-tag-row .dsh-tag-input{flex:1;min-width:0;height:32px;padding:0 8px;border:0;border-radius:6px;background:transparent}
+.dsh-tag-row .dsh-tag-input:focus{background:var(--dsw-alias-surface-primary,#fff);box-shadow:0 0 0 1px var(--dsw-alias-state-business-primary,#3d7bfd)}
 .dsh-tag-settingsCreate{padding-top:12px}
 .dsh-tag-empty{padding:10px 0;font-size:13px;color:var(--dsw-alias-label-tertiary,#888)}
 .dsh-tag-hover{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;line-height:17px;color:#cfd3d6}
@@ -854,39 +861,54 @@ window.__ModuleLoader__.load({
             void run(() => request('DELETE', `/${encodeURIComponent(tag.id)}`))
           }
 
-          return h('div', { className: 'dsh-tag-row' },
-            h('span', { className: 'dsh-tag-dot', style: { background: swatch(tag.color) }, 'aria-hidden': 'true' }),
-            h('input', {
-              className: 'dsh-tag-input',
-              value: text,
-              maxLength: 48,
-              disabled: busy,
-              'aria-label': tag.label,
-              onChange: (event) => setText(event.target.value),
-              onBlur: save,
-              onKeyDown: (event) => {
-                if (event.key !== 'Enter') return
-                event.preventDefault()
-                event.currentTarget.blur()
-              },
-            }),
-            h('div', { className: 'dsh-tag-swatches' }, SWATCHES.map(name => h('button', {
-              key: name,
-              type: 'button',
-              className: 'dsh-tag-swatch' + (tag.color === name ? ' is-current' : ''),
-              style: { background: swatch(name) },
-              'aria-label': name,
-              title: name,
-              disabled: busy,
-              onClick: () => recolor(name),
-            }))),
-            h('button', {
-              type: 'button',
-              className: 'dsh-tag-secondary',
-              disabled: busy,
-              onClick: remove,
-            }, t('remove')),
-            error === null ? null : h('span', { className: 'dsh-tag-error' }, error))
+          return h('div', { className: 'dsh-tag-rowWrap' },
+            h('div', { className: 'dsh-tag-row' },
+              h('span', { className: 'dsh-tag-dot', style: { background: swatch(tag.color) }, 'aria-hidden': 'true' }),
+              h('input', {
+                className: 'dsh-tag-input',
+                value: text,
+                maxLength: 48,
+                disabled: busy,
+                'aria-label': tag.label,
+                onChange: (event) => setText(event.target.value),
+                onBlur: save,
+                onKeyDown: (event) => {
+                  if (event.key !== 'Enter') return
+                  event.preventDefault()
+                  event.currentTarget.blur()
+                },
+              }),
+              h('div', { className: 'dsh-tag-swatches' }, SWATCHES.map(name => h('button', {
+                key: name,
+                type: 'button',
+                className: 'dsh-tag-swatch' + (tag.color === name ? ' is-current' : ''),
+                style: { background: swatch(name) },
+                'aria-label': name,
+                title: name,
+                disabled: busy,
+                onClick: () => recolor(name),
+              }))),
+              h('button', {
+                type: 'button',
+                className: 'dsh-tag-delete',
+                disabled: busy,
+                'aria-label': t('remove'),
+                title: t('remove'),
+                onClick: remove,
+              }, h('svg', {
+                width: 15,
+                height: 15,
+                viewBox: '0 0 16 16',
+                'aria-hidden': true,
+              }, h('path', {
+                d: 'M3 4.5h10M6 4.5V3h4v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5M6.5 7v4M9.5 7v4',
+                fill: 'none',
+                stroke: 'currentColor',
+                strokeWidth: 1.2,
+                strokeLinecap: 'round',
+                strokeLinejoin: 'round',
+              })))),
+            error === null ? null : h('p', { className: 'dsh-tag-error' }, error))
         }
 
         function SettingsPage() {
@@ -922,6 +944,17 @@ window.__ModuleLoader__.load({
               : h('div', { className: 'dsh-tag-settingsList' },
                 snapshot.tags.map(tag => h(TagRow, { key: tag.id, tag }))),
             h('div', { className: 'dsh-tag-create dsh-tag-settingsCreate' },
+              h('span', { className: 'dsh-tag-addIcon', 'aria-hidden': 'true' }, h('svg', {
+                width: 15,
+                height: 15,
+                viewBox: '0 0 16 16',
+              }, h('path', {
+                d: 'M8 3v10M3 8h10',
+                fill: 'none',
+                stroke: 'currentColor',
+                strokeWidth: 1.3,
+                strokeLinecap: 'round',
+              }))),
               h('input', {
                 className: 'dsh-tag-input',
                 value: label,
