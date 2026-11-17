@@ -1,0 +1,20 @@
+{
+  "plugin": "dsh-tag",
+  "dshRange": ">=0.2.2-rc.1 <0.3.0",
+  "protocol": 3,
+  "appMin": "0.1.0",
+  "entries": [
+    {
+      "dsh": "0.2.2-rc.1",
+      "result": "pass",
+      "testedAt": "2026-11-17",
+      "notes": "Sidebar colours, filter bar, reads shared with the phone."
+    },
+    {
+      "dsh": "0.2.2-rc.3",
+      "result": "pending",
+      "testedAt": null,
+      "notes": "Additive API only; runtime matrix pending."
+    }
+  ]
+}
