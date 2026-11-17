@@ -2,8 +2,8 @@ url: https://github.com/ada87/dsh-tag
 name: ada87/dsh-tag
 category: ui
 description:
-  en: Color tags for DSH sessions and workspaces, with a sidebar filter bar and per-theme title colors.
-  zh: "给 DSH 的会话和工作区打彩色标签，带侧边栏过滤条和明暗自适应的标题颜色。"
+  en: Color tags and unread state for DeepSeek Harness sessions and workspaces, with a sidebar filter bar and per-theme title colors.
+  zh: 给 DSH 的会话和工作区打彩色标签、标记未读，带侧边栏过滤条和明暗自适应的标题颜色。
 screenshots:
   - https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/sidebar.png
   - https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/settings.png
