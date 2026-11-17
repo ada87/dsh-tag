@@ -3,10 +3,8 @@
 [English](README.md) | [中文](README.zh.md) | [日本語](README.ja.md) | Español | [Français](README.fr.md) | [Deutsch](README.de.md) | [Русский](README.ru.md) | [Português](README.pt.md)
 
 [![npm version](https://img.shields.io/npm/v/dsh-tag?color=3d7bfd)](https://www.npmjs.com/package/dsh-tag)
-[![npm downloads](https://img.shields.io/npm/dm/dsh-tag?color=3d7bfd)](https://www.npmjs.com/package/dsh-tag)
 [![license](https://img.shields.io/npm/l/dsh-tag?color=3d7bfd)](https://github.com/ada87/dsh-tag/blob/main/LICENSE)
 [![dsh](https://img.shields.io/badge/dsh-0.2.x-3d7bfd)](https://github.com/ada87/dsh-tag/blob/main/docs/COMPATIBILITY.md)
-[![GitHub stars](https://img.shields.io/github/stars/ada87/dsh-tag?color=3d7bfd&logo=github)](https://github.com/ada87/dsh-tag)
 
 Etiquetas de color para sesiones y espacios de trabajo de DeepSeek Harness: una etiqueta por fila, el título toma su color y la barra sobre la lista de espacios de trabajo filtra por etiqueta.
 
