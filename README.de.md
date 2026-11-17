@@ -2,13 +2,19 @@
 
 [English](README.md) | [中文](README.zh.md) | [日本語](README.ja.md) | [Español](README.es.md) | [Français](README.fr.md) | Deutsch | [Русский](README.ru.md) | [Português](README.pt.md)
 
+[![npm version](https://img.shields.io/npm/v/dsh-tag?color=3d7bfd)](https://www.npmjs.com/package/dsh-tag)
+[![npm downloads](https://img.shields.io/npm/dm/dsh-tag?color=3d7bfd)](https://www.npmjs.com/package/dsh-tag)
+[![license](https://img.shields.io/npm/l/dsh-tag?color=3d7bfd)](https://github.com/ada87/dsh-tag/blob/main/LICENSE)
+[![dsh](https://img.shields.io/badge/dsh-0.2.x-3d7bfd)](https://github.com/ada87/dsh-tag/blob/main/docs/COMPATIBILITY.md)
+[![GitHub stars](https://img.shields.io/github/stars/ada87/dsh-tag?color=3d7bfd&logo=github)](https://github.com/ada87/dsh-tag)
+
 Farbige Tags für Sitzungen und Workspaces in DeepSeek Harness: ein Tag pro Zeile, der Titel übernimmt die Tag-Farbe, und die Leiste über der Workspace-Liste filtert nach Tag.
 
 ![Zwei Workspaces mit getaggten Sitzungen und der Filterleiste](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/sidebar.png)
 
 ## Installation
 
-Plugins → Plugin hinzufügen → `dsh-tag@0.1.1`
+Plugins → Plugin hinzufügen → `dsh-tag`
 
 ![Plugin hinzufügen](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/install.png)
 
