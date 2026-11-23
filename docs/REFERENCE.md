@@ -7,7 +7,7 @@ One tag per session or workspace. Picking another replaces it; picking the check
 The filter bar sits above the workspace list:
 
 - Click a color to show only sessions carrying that tag
-- A workspace tag brings out its whole group; matching groups open automatically and show the count
+- A tag on a workspace brings out its whole group; matching groups open automatically and show the count
 - Groups with no matches are hidden
 - Click the same color again, or the rainbow **All**, to restore everything, including groups the filter opened
 

@@ -3,7 +3,7 @@
  *
  * - Colors session and workspace titles with generated CSS rules keyed by the
  *   stable `data-row-key` attribute (no DOM mutation per row).
- * - Adds a "Tags" submenu to the session and workspace context menus. Each row
+ * - Adds a "Tag" submenu to the session and workspace context menus. Each row
  *   carries one tag: click to apply, click the checked tag to remove.
  * - Settings page renames, recolors and deletes tags.
  * - The colour bar above the session list filters sessions; it uses the
@@ -46,8 +46,7 @@ window.__ModuleLoader__.load({
     const SWATCHES = Object.keys(COLORS)
 
     const zh = {
-      menuSession: '标签',
-      menuWorkspace: '工作区标签',
+      menu: '标签',
       clear: '清除标签',
       noTags: '还没有标签，先去 设置 → DSH Tag 创建',
       newPlaceholder: '新标签文字…',
@@ -82,8 +81,7 @@ window.__ModuleLoader__.load({
     }
 
     const en = {
-      menuSession: 'Tags',
-      menuWorkspace: 'Workspace tags',
+      menu: 'Tag',
       clear: 'Clear tag',
       noTags: 'No tags yet — create one in Settings → DSH Tag',
       newPlaceholder: 'New tag label…',
@@ -118,8 +116,7 @@ window.__ModuleLoader__.load({
     }
 
     const ja = {
-      menuSession: 'タグ',
-      menuWorkspace: 'ワークスペースのタグ',
+      menu: 'タグ',
       clear: 'タグを解除',
       noTags: 'タグがまだありません。「設定 → DSH Tag」で作成できます',
       newPlaceholder: '新しいタグ名…',
@@ -154,8 +151,7 @@ window.__ModuleLoader__.load({
     }
 
     const es = {
-      menuSession: 'Etiquetas',
-      menuWorkspace: 'Etiquetas del espacio de trabajo',
+      menu: 'Etiqueta',
       clear: 'Quitar etiqueta',
       noTags: 'Aún no hay etiquetas; créala en Ajustes → DSH Tag',
       newPlaceholder: 'Nombre de la nueva etiqueta…',
@@ -190,8 +186,7 @@ window.__ModuleLoader__.load({
     }
 
     const fr = {
-      menuSession: 'Étiquettes',
-      menuWorkspace: 'Étiquettes de l’espace de travail',
+      menu: 'Étiquette',
       clear: 'Retirer l’étiquette',
       noTags: 'Pas encore d’étiquette — créez-en une dans Réglages → DSH Tag',
       newPlaceholder: 'Nom de la nouvelle étiquette…',
@@ -226,8 +221,7 @@ window.__ModuleLoader__.load({
     }
 
     const de = {
-      menuSession: 'Tags',
-      menuWorkspace: 'Workspace-Tags',
+      menu: 'Tag',
       clear: 'Tag entfernen',
       noTags: 'Noch keine Tags – lege sie unter Einstellungen → DSH Tag an',
       newPlaceholder: 'Name des neuen Tags…',
@@ -262,8 +256,7 @@ window.__ModuleLoader__.load({
     }
 
     const ru = {
-      menuSession: 'Метки',
-      menuWorkspace: 'Метки рабочего пространства',
+      menu: 'Метка',
       clear: 'Снять метку',
       noTags: 'Меток пока нет — создайте в «Настройки → DSH Tag»',
       newPlaceholder: 'Название новой метки…',
@@ -298,8 +291,7 @@ window.__ModuleLoader__.load({
     }
 
     const pt = {
-      menuSession: 'Etiquetas',
-      menuWorkspace: 'Etiquetas do espaço de trabalho',
+      menu: 'Etiqueta',
       clear: 'Remover etiqueta',
       noTags: 'Ainda não há etiquetas — crie em Configurações → DSH Tag',
       newPlaceholder: 'Nome da nova etiqueta…',
@@ -904,7 +896,7 @@ body[data-ds-dark-theme]{
             if (!live(sessionId)) continue
             tagged.add(sessionId)
           }
-          // A workspace tag covers its whole group: the workspace is a tagged
+          // A tag on a workspace covers its whole group: the workspace is a tagged
           // entity, so its sessions share the result. Session tags stay local.
           const taggedWorkspaces = new Set()
           for (const workspace of state.workspaces) {
@@ -1223,7 +1215,7 @@ body[data-ds-dark-theme]{
           const current = kind === 'session'
             ? state.sessions[target.id]
             : state.workspaces.find(item => item.id === target.id)?.tagId
-          const parentLabel = kind === 'session' ? t('menuSession') : t('menuWorkspace')
+          const parentLabel = t('menu')
           if (state.tags.length === 0) {
             return [{ id: 'tags', label: parentLabel, disabled: true, children: [{ id: 'empty', label: t('noTags'), disabled: true }] }]
           }

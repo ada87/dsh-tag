@@ -6,9 +6,11 @@
 [![license](https://img.shields.io/npm/l/dsh-tag?color=3d7bfd)](https://github.com/ada87/dsh-tag/blob/main/LICENSE)
 [![dsh](https://img.shields.io/badge/dsh-0.2.x-3d7bfd)](https://github.com/ada87/dsh-tag/blob/main/docs/COMPATIBILITY.md)
 
-DeepSeek Harness のセッションとワークスペースに色付きのタグを付けます。1 行に 1 つのタグ、タイトルはその色になり、ワークスペース一覧の上のバーでタグ絞り込みができます。
+1. DeepSeek Harness のセッションとワークスペースに色付きのタグを付けられます。
+2. ページ上のセッションとワークスペースを、タグで絞り込めます。
+3. 未読のセッションはタイトルが太字になり、開くと解除されます。
 
-![2 つのワークスペース、色付きタイトル、フィルターバー](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/sidebar.png)
+![タグで絞り込み](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/sidebar.png)
 
 ## インストール
 
@@ -19,13 +21,12 @@ DeepSeek Harness のセッションとワークスペースに色付きのタグ
 ## 使い方
 
 - セッションまたはワークスペースの見出しを右クリック → **タグ** → 色を選択
-- ワークスペースのタグはグループ全体を覆います
+- ワークスペースに付けたタグは、グループ全体を覆います
 - ワークスペース一覧の上の色をクリックすると絞り込み。一致したグループは件数付きで開きます
-- 設定 → **DSH Tag**：名前変更、色変更、削除、追加。最大 10 個、色は重複不可
-- 使わないときはフィルターバーを非表示にできます
+- 設定 → **DSH Tag**：名前の変更、色の変更、削除、追加。最大 10 個、色は重複不可
 
-![DSH Tag 設定](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/settings.png)
+![DSH Tag の設定](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/settings.png)
 
-API、色、互換性、開発: [docs/REFERENCE.md](https://github.com/ada87/dsh-tag/blob/main/docs/REFERENCE.md)。
+API、色、互換性、開発の説明：[docs/REFERENCE.md](https://github.com/ada87/dsh-tag/blob/main/docs/REFERENCE.md)
 
 MIT

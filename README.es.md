@@ -6,11 +6,13 @@
 [![license](https://img.shields.io/npm/l/dsh-tag?color=3d7bfd)](https://github.com/ada87/dsh-tag/blob/main/LICENSE)
 [![dsh](https://img.shields.io/badge/dsh-0.2.x-3d7bfd)](https://github.com/ada87/dsh-tag/blob/main/docs/COMPATIBILITY.md)
 
-Etiquetas de color para sesiones y espacios de trabajo de DeepSeek Harness: una etiqueta por fila, el título toma su color y la barra sobre la lista de espacios de trabajo filtra por etiqueta.
+1. Etiquetas de color para las sesiones y los espacios de trabajo de DeepSeek Harness.
+2. Filtra por etiqueta las sesiones y los espacios de trabajo que hay en pantalla.
+3. Las sesiones sin leer muestran el título en negrita hasta que las abres.
 
-![Dos espacios de trabajo con sesiones etiquetadas y la barra de filtros](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/sidebar.png)
+![Filtrado por etiqueta](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/sidebar.png)
 
-## Instalar
+## Instalación
 
 Complementos → Añadir complemento → `dsh-tag`
 
@@ -18,14 +20,13 @@ Complementos → Añadir complemento → `dsh-tag`
 
 ## Uso
 
-- Haz clic derecho en una sesión o en el encabezado de un espacio de trabajo → **Etiquetas** → elige un color
-- La etiqueta de un espacio de trabajo cubre todo su grupo
-- Haz clic en un color sobre la lista de espacios de trabajo para filtrar; los grupos coincidentes se abren con un recuento
-- Ajustes → **DSH Tag**: renombrar, cambiar color, eliminar, añadir. Hasta 10 etiquetas, una por color
-- Desactiva la barra de filtros si no la usas
+- Clic derecho en una sesión o en el encabezado de un espacio de trabajo → **Etiqueta** → elige un color
+- Una etiqueta en un espacio de trabajo cubre todo su grupo
+- Haz clic en un color encima de la lista de espacios de trabajo para filtrar; los grupos que coinciden se abren con su recuento
+- Ajustes → **DSH Tag**: renombrar, cambiar de color, eliminar y añadir. Hasta 10 etiquetas, una por color
 
 ![Ajustes de DSH Tag](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/settings.png)
 
-API, colores, compatibilidad y desarrollo: [docs/REFERENCE.md](https://github.com/ada87/dsh-tag/blob/main/docs/REFERENCE.md).
+API, paleta, compatibilidad y desarrollo: [docs/REFERENCE.md](https://github.com/ada87/dsh-tag/blob/main/docs/REFERENCE.md)
 
 MIT

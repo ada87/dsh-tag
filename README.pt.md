@@ -6,9 +6,11 @@
 [![license](https://img.shields.io/npm/l/dsh-tag?color=3d7bfd)](https://github.com/ada87/dsh-tag/blob/main/LICENSE)
 [![dsh](https://img.shields.io/badge/dsh-0.2.x-3d7bfd)](https://github.com/ada87/dsh-tag/blob/main/docs/COMPATIBILITY.md)
 
-Etiquetas coloridas para sessões e espaços de trabalho do DeepSeek Harness: uma etiqueta por linha, o título assume a cor e a barra acima da lista de espaços de trabalho filtra por etiqueta.
+1. Etiquetas coloridas para as sessões e os espaços de trabalho do DeepSeek Harness.
+2. Filtre por etiqueta as sessões e os espaços de trabalho na tela.
+3. As sessões não lidas ficam com o título em negrito até você abri-las.
 
-![Dois espaços de trabalho com sessões etiquetadas e a barra de filtros](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/sidebar.png)
+![Filtragem por etiqueta](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/sidebar.png)
 
 ## Instalação
 
@@ -18,14 +20,13 @@ Plugins → Adicionar plugin → `dsh-tag`
 
 ## Uso
 
-- Clique com o botão direito em uma sessão ou no cabeçalho de um espaço de trabalho → **Etiquetas** → escolha uma cor
-- A etiqueta de um espaço de trabalho cobre o grupo inteiro
-- Clique em uma cor acima da lista de espaços de trabalho para filtrar; os grupos correspondentes abrem com a contagem
+- Clique com o botão direito em uma sessão ou no cabeçalho de um espaço de trabalho → **Etiqueta** → escolha uma cor
+- Uma etiqueta em um espaço de trabalho cobre o grupo inteiro
+- Clique numa cor acima da lista de espaços de trabalho para filtrar; os grupos correspondentes abrem com a contagem
 - Configurações → **DSH Tag**: renomear, trocar a cor, excluir, adicionar. Até 10 etiquetas, uma cor para cada
-- Desative a barra de filtros se não a usar
 
 ![Configurações do DSH Tag](https://raw.githubusercontent.com/ada87/dsh-tag/main/docs/images/settings.png)
 
-API, cores, compatibilidade e desenvolvimento: [docs/REFERENCE.md](https://github.com/ada87/dsh-tag/blob/main/docs/REFERENCE.md).
+API, paleta, compatibilidade e desenvolvimento: [docs/REFERENCE.md](https://github.com/ada87/dsh-tag/blob/main/docs/REFERENCE.md)
 
 MIT
