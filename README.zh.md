@@ -1,6 +1,6 @@
 # DSH Tag
 
-[English](README.md) | 中文 | [日本語](README.ja.md) | [Español](README.es.md) | [Français](README.fr.md) | [Deutsch](README.de.md) | [Русский](README.ru.md) | [Português](README.pt.md)
+[English](https://github.com/ada87/dsh-tag/blob/main/README.md) | 中文 | [日本語](https://github.com/ada87/dsh-tag/blob/main/README.ja.md) | [Español](https://github.com/ada87/dsh-tag/blob/main/README.es.md) | [Français](https://github.com/ada87/dsh-tag/blob/main/README.fr.md) | [Deutsch](https://github.com/ada87/dsh-tag/blob/main/README.de.md) | [Русский](https://github.com/ada87/dsh-tag/blob/main/README.ru.md) | [Português](https://github.com/ada87/dsh-tag/blob/main/README.pt.md)
 
 [![npm version](https://img.shields.io/npm/v/dsh-tag?color=3d7bfd)](https://www.npmjs.com/package/dsh-tag)
 [![license](https://img.shields.io/npm/l/dsh-tag?color=3d7bfd)](https://github.com/ada87/dsh-tag/blob/main/LICENSE)
